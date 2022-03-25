@@ -1,0 +1,27 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.5.10'
+    id 'application'
+}
+
+group = 'me.boti'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation "junit:junit:4.13.2"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '11'
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '11'
+}
+
+application {
+    mainClassName = 'MainKt'
+}
