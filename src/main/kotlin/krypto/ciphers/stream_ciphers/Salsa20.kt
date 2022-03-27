@@ -3,6 +3,7 @@ package krypto.ciphers.stream_ciphers
 import krypto.utils.toInt
 import kotlin.random.Random
 
+//TODO: Use UInt?
 class Salsa20(val key: ByteArray, var nonce: Long?) {
 
     //var internalState = Array(4) { IntArray(4) } // 2D array of size 4x4
@@ -60,9 +61,9 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
         internalState[13] = keyParts[6].toByteArray().toInt()
         internalState[14] = keyParts[7].toByteArray().toInt()
 
-        //Counter positiona
+        //Counter positions
         val counterFirstPart = (counter shr 32).toInt()
-        val counterSecondPart = (counter shl 32).toInt()
+        val counterSecondPart = ((counter shl 32) shr 32).toInt()
         /*
         internalState[2][0] = counterFirstPart
         internalState[2][1] = counterSecondPart
@@ -73,7 +74,7 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
 
         //Nonce positions
         val nonceFirstPart = (nonce shr 32).toInt()
-        val nonceSecondPart = (nonce shl 32).toInt()
+        val nonceSecondPart = ((nonce shl 32) shr 32).toInt()
         /*
         internalState[1][2] = nonceFirstPart
         internalState[1][3] = nonceSecondPart
