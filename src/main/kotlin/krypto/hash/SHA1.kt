@@ -40,11 +40,11 @@ class SHA1 {
         }
 
         // Concat length of the message
-        val originalLengthLeft = (originalLength shr 32).toUInt().toUByteArray()
-        val originalLengthRight = ((originalLength shl 32) shr 32).toUInt().toUByteArray()
+        val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()
+        val originalLengthRight = (((originalLength * 8u) shl 32) shr 32).toUInt().toUByteArray()
 
-        msgCopy.addAll(originalLengthRight)
         msgCopy.addAll(originalLengthLeft)
+        msgCopy.addAll(originalLengthRight)
 
         val chunks = msgCopy.chunked(64)
         chunks.forEach { uByteList ->
