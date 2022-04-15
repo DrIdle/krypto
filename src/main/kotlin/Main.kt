@@ -104,4 +104,6 @@ fun main() {
     val testHasher = SHA1()
     val myhash = testHasher.hash(" ".toByteArray(Charsets.US_ASCII).toUByteArray())
     println(myhash)
+
+
 }

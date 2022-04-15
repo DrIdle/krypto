@@ -64,7 +64,7 @@ class SHA1 {
             var e = H4
 
             var f: UInt = 0U
-            var k: UInt = 0U
+            var k: UInt
             for (i in 0..79) {
                 if (i in 0..19) {
                     f = (b and c) or (b.inv() and d)

@@ -3,8 +3,8 @@ package krypto.utils
 import krypto.ciphers.stream_ciphers.OneTimePad
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import kotlin.experimental.xor
 
+@OptIn(ExperimentalUnsignedTypes::class)
 class UtilsTest {
 
     @Test
@@ -20,6 +20,13 @@ class UtilsTest {
         val ten = 10
         val testArray = byteArrayOf(ten.toByte())
         Assertions.assertEquals(10, testArray.toInt())
+    }
+
+    @Test
+    fun `toUInt() should give back the correct value`() {
+        val ten: UInt = 10u
+        val testArray = ubyteArrayOf(ten.toUByte())
+        Assertions.assertEquals(10u, testArray.toUInt())
     }
 
 }

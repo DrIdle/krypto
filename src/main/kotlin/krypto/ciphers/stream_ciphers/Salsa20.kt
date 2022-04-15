@@ -1,13 +1,13 @@
 package krypto.ciphers.stream_ciphers
 
-import krypto.utils.toInt
+import krypto.utils.toUInt
 import kotlin.random.Random
 
-//TODO: Use UInt?
-class Salsa20(val key: ByteArray, var nonce: Long?) {
+@OptIn(ExperimentalUnsignedTypes::class)
+class Salsa20 constructor(private var key: UByteArray, var nonce: Long?) {
 
     //var internalState = Array(4) { IntArray(4) } // 2D array of size 4x4
-    var internalState = IntArray(16)
+    private var internalState = UIntArray(16)
 
     private val constant: String = "expand 32-byte k"
     private val charset = Charsets.US_ASCII
@@ -25,10 +25,10 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
         internalState[a] = internalState[a] xor ((internalState[d] + internalState[c]) shl 18)
     }
 
-    private fun intializeInternalState(key: ByteArray, nonce: Long, counter: Long, ) {
+    private fun initializeInternalState(key: UByteArray, nonce: Long, counter: Long ) {
 
         //Constant positions
-        val constantByteList = constant.toByteArray(charset = charset).toList()
+        val constantByteList = constant.toByteArray(charset = charset).toUByteArray().toList()
         val constantParts = constantByteList.chunked(4)
         /*
         internalState[0][0] = constantParts[0].toByteArray().toInt()
@@ -36,10 +36,10 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
         internalState[2][2] = constantParts[2].toByteArray().toInt()
         internalState[3][3] = constantParts[3].toByteArray().toInt()
          */
-        internalState[0] = constantParts[0].toByteArray().toInt()
-        internalState[5] = constantParts[1].toByteArray().toInt()
-        internalState[10] = constantParts[2].toByteArray().toInt()
-        internalState[15] = constantParts[3].toByteArray().toInt()
+        internalState[0] = constantParts[0].toUByteArray().toUInt()
+        internalState[5] = constantParts[1].toUByteArray().toUInt()
+        internalState[10] = constantParts[2].toUByteArray().toUInt()
+        internalState[15] = constantParts[3].toUByteArray().toUInt()
         //Key positions
         val keyParts = key.toList().chunked(4)
         /*
@@ -52,18 +52,18 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
         internalState[3][1] = keyParts[6].toByteArray().toInt()
         internalState[3][2] = keyParts[7].toByteArray().toInt()
          */
-        internalState[1] = keyParts[0].toByteArray().toInt()
-        internalState[2] = keyParts[1].toByteArray().toInt()
-        internalState[3] = keyParts[2].toByteArray().toInt()
-        internalState[4] = keyParts[3].toByteArray().toInt()
-        internalState[11] = keyParts[4].toByteArray().toInt()
-        internalState[12] = keyParts[5].toByteArray().toInt()
-        internalState[13] = keyParts[6].toByteArray().toInt()
-        internalState[14] = keyParts[7].toByteArray().toInt()
+        internalState[1] = keyParts[0].toUByteArray().toUInt()
+        internalState[2] = keyParts[1].toUByteArray().toUInt()
+        internalState[3] = keyParts[2].toUByteArray().toUInt()
+        internalState[4] = keyParts[3].toUByteArray().toUInt()
+        internalState[11] = keyParts[4].toUByteArray().toUInt()
+        internalState[12] = keyParts[5].toUByteArray().toUInt()
+        internalState[13] = keyParts[6].toUByteArray().toUInt()
+        internalState[14] = keyParts[7].toUByteArray().toUInt()
 
         //Counter positions
-        val counterFirstPart = (counter shr 32).toInt()
-        val counterSecondPart = ((counter shl 32) shr 32).toInt()
+        val counterFirstPart = (counter shr 32).toUInt()
+        val counterSecondPart = ((counter shl 32) shr 32).toUInt()
         /*
         internalState[2][0] = counterFirstPart
         internalState[2][1] = counterSecondPart
@@ -73,8 +73,8 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
         internalState[9] = counterSecondPart
 
         //Nonce positions
-        val nonceFirstPart = (nonce shr 32).toInt()
-        val nonceSecondPart = ((nonce shl 32) shr 32).toInt()
+        val nonceFirstPart = (nonce shr 32).toUInt()
+        val nonceSecondPart = ((nonce shl 32) shr 32).toUInt()
         /*
         internalState[1][2] = nonceFirstPart
         internalState[1][3] = nonceSecondPart
@@ -85,15 +85,16 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
 
     }
 
-    fun encodeAndDecode(dataBytaArray: ByteArray, startingPosition: Long = 0): ByteArray {
-        val numberOfRounds = dataBytaArray.size / 512
-        val keyStream = ByteArray(dataBytaArray.size)
+
+    fun encodeAndDecode(dataByteArray: UByteArray, startingPosition: Long = 0): UByteArray {
+        val numberOfRounds = dataByteArray.size / 512
+        val keyStream = UByteArray(dataByteArray.size)
         var counter: Long = startingPosition
 
         nonce = nonce ?: Random.nextLong()
 
         for (i in 0 until (numberOfRounds+1)) {
-            intializeInternalState(key, nonce!!, counter)
+            initializeInternalState(key, nonce!!, counter)
             for (j in 0 until 20) {
 
                 //Odd round
@@ -108,17 +109,17 @@ class Salsa20(val key: ByteArray, var nonce: Long?) {
                 qr(15, 12, 13, 14)
             }
             if (i < numberOfRounds) {
-                internalState.map { it.toByte() }.toByteArray().copyInto(keyStream, destinationOffset = (i * 512))
+                internalState.map { it.toUByte() }.toUByteArray().copyInto(keyStream, destinationOffset = (i * 512))
             }
             else {
-                internalState.map { it.toByte() }.toByteArray().copyInto(keyStream, destinationOffset = (i * 512), endIndex = (dataBytaArray.size - (numberOfRounds * 512)) )
+                internalState.map { it.toUByte() }.toUByteArray().copyInto(keyStream, destinationOffset = (i * 512), endIndex = (dataByteArray.size - (numberOfRounds * 512)) )
             }
             counter++
         }
 
         val encoder = OneTimePad()
 
-        return encoder.encodeAndDecode(dataBytaArray, keyStream)
+        return encoder.encodeAndDecode(dataByteArray, keyStream)
     }
 
 }

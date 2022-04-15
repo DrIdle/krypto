@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-
+@OptIn(ExperimentalUnsignedTypes::class)
 class OneTimePadTest {
 
     private val text = "AAA"
@@ -16,15 +16,15 @@ class OneTimePadTest {
     @Test
     fun `Encoding gives back the correct ciphertext`() {
         val encoder = OneTimePad()
-        val encodedText = encoder.encodeAndDecode(text.toByteArray(charset = charset),key.toByteArray(charset = charset))
-        assertEquals(ciphertext, encodedText.toString(charset = charset))
+        val encodedText = encoder.encodeAndDecode(text.toByteArray(charset = charset).toUByteArray(),key.toByteArray(charset = charset).toUByteArray())
+        assertEquals(ciphertext, encodedText.toByteArray().toString(charset = charset))
     }
 
     @Test
     fun `Not equal lengths should throw exception`() {
         val encoder = OneTimePad()
         assertThrows<IllegalArgumentException>{
-            encoder.encodeAndDecode(text.toByteArray(charset = charset), wrongLengthKey.toByteArray(charset = charset))
+            encoder.encodeAndDecode(text.toByteArray(charset = charset).toUByteArray(), wrongLengthKey.toByteArray(charset = charset).toUByteArray())
         }
     }
 }
