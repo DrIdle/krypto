@@ -21,13 +21,11 @@ fun String.strxor(key:String, charset: Charset): String {
 
 fun ByteArray.toInt(): Int {
     val newArray: ByteArray
-    //TODO: limit the size of the array to be smaller or equal to 4
-    if (this.size != 4) {
-        //throw Exception("ByteArray must be of size 4")
+    if (this.size > 4) {
+        throw Exception("ByteArray must be of size 4")
+    } else {
         newArray = ByteArray(4)
         this.copyInto(destination = newArray, destinationOffset = (4 - this.size))
-    } else {
-        newArray = this
     }
     var result = 0
     for (i in newArray.indices) {
@@ -44,13 +42,11 @@ fun UInt.toUByteArray(): UByteArray {
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UByteArray.toUInt(): UInt {
     val newArray: UByteArray
-    //TODO: limit the size of the array to be smaller or equal to 4
-    if (this.size != 4) {
-        //throw Exception("ByteArray must be of size 4")
+    if (this.size > 4) {
+        throw Exception("ByteArray must be of size 4")
+    } else {
         newArray = UByteArray(4)
         this.copyInto(destination = newArray, destinationOffset = (4 - this.size))
-    } else {
-        newArray = this
     }
     var result: UInt = 0u
     for (i in newArray.indices) {
