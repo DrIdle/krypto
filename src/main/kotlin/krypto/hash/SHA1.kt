@@ -3,16 +3,17 @@ package krypto.hash
 import krypto.utils.toUByteArray
 import krypto.utils.toUInt
 
-class SHA1 {
+@OptIn(ExperimentalUnsignedTypes::class)
+open class SHA1 {
 
     // Constants used by SHA1
-    var H0: UInt = 0x67452301u
-    var H1: UInt = 0xEFCDAB89u
-    var H2: UInt = 0x98BADCFEu
-    var H3: UInt = 0x10325476u
-    var H4: UInt = 0xC3D2E1F0u
+    private var H0: UInt = 0x67452301u
+    private var H1: UInt = 0xEFCDAB89u
+    private var H2: UInt = 0x98BADCFEu
+    private var H3: UInt = 0x10325476u
+    private var H4: UInt = 0xC3D2E1F0u
 
-    private fun k(t: Int): UInt {
+    open fun k(t: Int): UInt {
         return when(t) {
             in 0..19 -> 0x5A827999u
             in 20..39 -> 0x6ED9EBA1u
@@ -24,7 +25,18 @@ class SHA1 {
         }
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
+    open fun f(b: UInt, c: UInt, d: UInt, i: Int): UInt {
+        return when(i) {
+            in 0..19 -> (b and c) or (b.inv() and d)
+            in 20..39 -> b xor c xor d
+            in 40..59 -> (b and c) or (b and d) or (c and d)
+            in 60..79 -> b xor c xor d
+            else -> {
+                throw RuntimeException("Bad i provided")
+            }
+        }
+    }
+
     fun hash(msg: UByteArray): String {
         val originalLength = msg.size.toULong()
 
@@ -39,13 +51,31 @@ class SHA1 {
                 starter += 8u
         }
 
+        concatOriginalLength(originalLength, msgCopy)
+
+        val hashValue = digestGeneration(msgCopy)
+
+        val hexDigest = StringBuilder()
+        hashValue.map { uIntElement ->
+            val uByteArray = uIntElement.toUByteArray()
+            uByteArray.forEach { uByte ->
+                hexDigest.append(uByte.toString(16).padStart(2, '0'))
+            }
+        }
+
+        return hexDigest.toString()
+    }
+
+    open fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
         // Concat length of the message
         val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()
         val originalLengthRight = (((originalLength * 8u) shl 32) shr 32).toUInt().toUByteArray()
 
         msgCopy.addAll(originalLengthLeft)
         msgCopy.addAll(originalLengthRight)
+    }
 
+    open fun digestGeneration(msgCopy: MutableList<UByte>): UIntArray {
         val chunks = msgCopy.chunked(64)
         chunks.forEach { uByteList ->
             val uByteArrays = uByteList.chunked(4)
@@ -55,7 +85,10 @@ class SHA1 {
             }
             val uintArrayList = uintArray.toMutableList()
             for (i in 16..79) {
-                uintArrayList[i] = (uintArrayList[i-3] xor uintArrayList[i-8] xor uintArrayList[i-14] xor uintArrayList[i-16]).rotateLeft(1)
+                uintArrayList[i] =
+                    (uintArrayList[i - 3] xor uintArrayList[i - 8] xor uintArrayList[i - 14] xor uintArrayList[i - 16]).rotateLeft(
+                        1
+                    )
             }
             var a = H0
             var b = H1
@@ -63,22 +96,9 @@ class SHA1 {
             var d = H3
             var e = H4
 
-            var f: UInt = 0U
-            var k: UInt
             for (i in 0..79) {
-                if (i in 0..19) {
-                    f = (b and c) or (b.inv() and d)
-                }
-                if (i in 20..39){
-                    f = b xor c xor d
-                }
-                if (i in 40..59) {
-                    f = (b and c) or (b and d) or (c and d)
-                }
-                if (i in 60..79) {
-                    f = b xor c xor d
-                }
-                k = k(i)
+                val f: UInt = f(b, c, d, i)
+                val k: UInt = k(i)
                 val temp = a.rotateLeft(5) + f + e + k + uintArrayList[i]
                 e = d
                 d = c
@@ -93,16 +113,6 @@ class SHA1 {
             H3 += d
             H4 += e
         }
-        val hashValue = uintArrayOf(H0, H1, H2, H3, H4)
-
-        val hexDigest = StringBuilder()
-        hashValue.map { uIntElement ->
-            val uByteArray = uIntElement.toUByteArray()
-            uByteArray.forEach { uByte ->
-                hexDigest.append(uByte.toString(16).padStart(2, '0'))
-            }
-        }
-
-        return hexDigest.toString()
+        return uintArrayOf(H0, H1, H2, H3, H4)
     }
 }

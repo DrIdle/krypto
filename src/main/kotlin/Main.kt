@@ -1,4 +1,5 @@
 import krypto.ciphers.stream_ciphers.Salsa20
+import krypto.hash.MD5
 import krypto.hash.SHA1
 
 @OptIn(ExperimentalUnsignedTypes::class)
@@ -63,6 +64,11 @@ fun main() {
     val nonce: ULong = 0u
     val testEncoder = Salsa20(key = keyArray, nonce = nonce)
     //val ciphertext = testEncoder.encodeAndDecode(textArray)
+
+    val md5 = MD5()
+    val hash = md5.hash("They are deterministic".toByteArray(charset = Charsets.US_ASCII).toUByteArray())
+    println()
+    println(hash)
 
 
 
