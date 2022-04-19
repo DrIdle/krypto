@@ -60,8 +60,10 @@ fun main() {
     for (i in 0 until 64) {
         textArray[i] = 65.toUByte()
     }
-    val nonce = 0L
+    val nonce: ULong = 0u
     val testEncoder = Salsa20(key = keyArray, nonce = nonce)
-    val ciphertext = testEncoder.encodeAndDecode(textArray)
+    //val ciphertext = testEncoder.encodeAndDecode(textArray)
+
+
 
 }

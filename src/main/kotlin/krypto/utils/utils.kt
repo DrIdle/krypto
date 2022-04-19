@@ -40,6 +40,25 @@ fun UInt.toUByteArray(): UByteArray {
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
+fun ULong.toUByteArray(): UByteArray {
+    return  ubyteArrayOf(shr(56).toUByte(), shr(48).toUByte(), shr(40).toUByte(), shr(32).toUByte(), shr(24).toUByte(), shr(16).toUByte(), shr(8).toUByte(), this.toUByte())
+}
+
+@OptIn(ExperimentalUnsignedTypes::class)
+fun UByteArray.littleEndian(): UInt {
+    if (this.size != 4) {
+        throw Exception("ByteArray must be of size 4")
+    }
+    return this[0] + (this[1].toUInt() shl 8) + (this[2].toUInt() shl 16) + (this[3].toUInt() shl 24)
+
+}
+
+@OptIn(ExperimentalUnsignedTypes::class)
+fun UInt.revLittleEndian(): UByteArray {
+    return ubyteArrayOf(this.toUByte(), (this shr 8).toUByte(), (this shr 16).toUByte(), (this shr 24).toUByte())
+}
+
+@OptIn(ExperimentalUnsignedTypes::class)
 fun UByteArray.toUInt(): UInt {
     val newArray: UByteArray
     if (this.size > 4) {

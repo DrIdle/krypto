@@ -1,137 +1,160 @@
 package krypto.ciphers.stream_ciphers
 
+import krypto.utils.littleEndian
+import krypto.utils.revLittleEndian
 import krypto.utils.toUByteArray
-import krypto.utils.toUInt
 import kotlin.random.Random
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class Salsa20 constructor(private var key: UByteArray, var nonce: Long?) {
+class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
 
-    var internalState = UIntArray(16)
+    private val sigma = arrayOf(
+        ubyteArrayOf(101u, 120u, 112u, 97u),
+        ubyteArrayOf(110u, 100u, 32u, 51u),
+        ubyteArrayOf(50u, 45u, 98u, 121u),
+        ubyteArrayOf(116u, 101u, 32u, 107u)
+    )
 
-    private val constant: String = "expand 32-byte k"
-    private val charset = Charsets.US_ASCII
-    var savedInternal: UIntArray = UIntArray(16)
+    private val tau = arrayOf(
+        ubyteArrayOf(101u, 120u, 112u, 97u),
+        ubyteArrayOf(110u, 100u, 32u, 49u),
+        ubyteArrayOf(54u, 45u, 98u, 121u),
+        ubyteArrayOf(116u, 101u, 32u, 107u)
+    )
 
     init {
-        if (key.size != 32) {
-            throw IllegalArgumentException("Key size must be 256 bit (32 byte)")
+        if (!((key.size == 32) or (key.size == 16))) {
+            throw IllegalArgumentException("Key size must be 256 bit (32 byte) or 128 bit (16 byte)")
         }
     }
 
-    fun qr(a: Int, b: Int, c: Int, d: Int) {
-        internalState[b] = internalState[b] xor ((internalState[a] + internalState[d]).rotateLeft(7))
-        internalState[c] = internalState[c] xor ((internalState[b] + internalState[a]).rotateLeft(9))
-        internalState[d] = internalState[d] xor ((internalState[c] + internalState[b]).rotateLeft(13))
-        internalState[a] = internalState[a] xor ((internalState[d] + internalState[c]).rotateLeft(18))
+    fun quarterRound(y: UIntArray): UIntArray {
+        val z = UIntArray(4)
+        z[1] = y[1] xor (y[0] + y[3]).rotateLeft(7)
+        z[2] = y[2] xor (z[1] + y[0]).rotateLeft(9)
+        z[3] = y[3] xor (z[2] + z[1]).rotateLeft(13)
+        z[0] = y[0] xor (z[3] + z[2]).rotateLeft(18)
+
+        return z
     }
 
-    fun initializeInternalState(key: UByteArray, nonce: Long, counter: Long ) {
+    fun rowRound(y: UIntArray): UIntArray {
+        val z = UIntArray(16)
 
-        //Constant positions
-        val constantByteList = constant.toByteArray(charset = charset).toUByteArray().toList()
-        val constantParts = constantByteList.chunked(4)
-        //internalState[0] = constantParts[0].toUByteArray().toUInt()
-        //internalState[5] = constantParts[1].toUByteArray().toUInt()
-        //internalState[10] = constantParts[2].toUByteArray().toUInt()
-        //internalState[15] = constantParts[3].toUByteArray().toUInt()
+        val qrResult1 = quarterRound(uintArrayOf(y[0], y[1], y[2], y[3]))
+        val qrResult2 = quarterRound(uintArrayOf(y[5], y[6], y[7], y[4]))
+        val qrResult3 = quarterRound(uintArrayOf(y[10], y[11], y[8], y[9]))
+        val qrResult4 = quarterRound(uintArrayOf(y[15], y[12], y[13], y[14]))
 
-        internalState[0] = 0x61707865u
-        internalState[5] = 0x3320646eu
-        internalState[10] = 0x79622d32u
-        internalState[15] = 0x6b206574u
+        z[0] = qrResult1[0]
+        z[1] = qrResult1[1]
+        z[2] = qrResult1[2]
+        z[3] = qrResult1[3]
 
-        //Key positions
-        val keyParts = key.toList().chunked(4)
-        internalState[1] = keyParts[0].toUByteArray().reversedArray().toUInt()
-        internalState[2] = keyParts[1].toUByteArray().reversedArray().toUInt()
-        internalState[3] = keyParts[2].toUByteArray().reversedArray().toUInt()
-        internalState[4] = keyParts[3].toUByteArray().reversedArray().toUInt()
-        internalState[11] = keyParts[4].toUByteArray().reversedArray().toUInt()
-        internalState[12] = keyParts[5].toUByteArray().reversedArray().toUInt()
-        internalState[13] = keyParts[6].toUByteArray().reversedArray().toUInt()
-        internalState[14] = keyParts[7].toUByteArray().reversedArray().toUInt()
+        z[5] = qrResult2[0]
+        z[6] = qrResult2[1]
+        z[7] = qrResult2[2]
+        z[4] = qrResult2[3]
 
-        //Counter positions
-        val counterFirstPart = (counter shr 32).toUInt()
-        val counterSecondPart = ((counter shl 32) shr 32).toUInt()
-        internalState[8] = counterSecondPart
-        internalState[9] = counterFirstPart
+        z[10] = qrResult3[0]
+        z[11] = qrResult3[1]
+        z[8] = qrResult3[2]
+        z[9] = qrResult3[3]
 
-        //Nonce positions
-        val nonceFirstPart = (nonce shr 32).toUInt().toUByteArray().reversedArray().toUInt()
-        val nonceSecondPart = ((nonce shl 32) shr 32).toUInt().toUByteArray().reversedArray().toUInt()
-        internalState[6] = nonceFirstPart
-        internalState[7] = nonceSecondPart
+        z[15] = qrResult4[0]
+        z[12] = qrResult4[1]
+        z[13] = qrResult4[2]
+        z[14] = qrResult4[3]
 
-        savedInternal = internalState.copyOf()
+        return z
+    }
 
-        internalState.forEachIndexed { index, uInt ->
-            print("0x${uInt.toString(16).padStart(8, '0')} ")
-            if (arrayListOf(3, 7, 11, 15).contains(index)) {
-                println()
-            }
+    fun columnRound(x: UIntArray): UIntArray {
+        val y = UIntArray(16)
+
+        val qrResult1 = quarterRound(uintArrayOf(x[0], x[4], x[8], x[12]))
+        val qrResult2 = quarterRound(uintArrayOf(x[5], x[9], x[13], x[1]))
+        val qrResult3 = quarterRound(uintArrayOf(x[10], x[14], x[2], x[6]))
+        val qrResult4 = quarterRound(uintArrayOf(x[15], x[3], x[7], x[11]))
+
+        y[0] = qrResult1[0]
+        y[4] = qrResult1[1]
+        y[8] = qrResult1[2]
+        y[12] = qrResult1[3]
+
+        y[5] = qrResult2[0]
+        y[9] = qrResult2[1]
+        y[13] = qrResult2[2]
+        y[1] = qrResult2[3]
+
+        y[10] = qrResult3[0]
+        y[14] = qrResult3[1]
+        y[2] = qrResult3[2]
+        y[6] = qrResult3[3]
+
+        y[15] = qrResult4[0]
+        y[3] = qrResult4[1]
+        y[7] = qrResult4[2]
+        y[11] = qrResult4[3]
+
+        return y
+    }
+
+    fun doubleRound(x: UIntArray): UIntArray {
+        return rowRound(columnRound(x))
+    }
+
+    fun salsa20Hash(x: UByteArray): UByteArray {
+        var xAsWords = UIntArray(16)
+
+        for (i in 0 until 16) {
+            xAsWords[i] = x.copyOfRange(i*4, (i*4)+4).littleEndian()
         }
 
+        val xAsWordsOriginal = xAsWords.copyOf()
+
+        for (i in 0 until 10) {
+            xAsWords = doubleRound(xAsWords)
+        }
+
+        val res = xAsWords.zip(xAsWordsOriginal) {
+            xWord, zWord ->
+            xWord + zWord
+        }.toUIntArray().map {
+            it.revLittleEndian()
+        }.flatten().toUByteArray()
+
+        return res
     }
 
+    fun salsa20Expansion(k: UByteArray, n: UByteArray): UByteArray {
+        if (k.size == 32) {
+            return salsa20Hash(sigma[0] + k.copyOfRange(0,16) + sigma[1] + n + sigma[2] + k.copyOfRange(16,32)+ sigma[3])
+        }
+        if (k.size == 16) {
+            return salsa20Hash(tau[0] + k + tau[1] + n + tau[2] + k + tau[3])
+        }
+        return ubyteArrayOf()
+    }
 
-    fun encodeAndDecode(dataByteArray: UByteArray, startingPosition: Long = 0L): UByteArray {
-        val numberOfRounds = dataByteArray.size / 64
-        val keyStream = UByteArray(dataByteArray.size)
-        var counter: Long = startingPosition
+    fun encodeDecode(m: UByteArray, counter: ULong = 0u): UByteArray {
+        nonce = nonce ?: 0u
+        val numberOfRounds = m.size / 64
+        val result = UByteArray(m.size)
+        var runningCounter = counter
 
-        nonce = nonce ?: Random.nextLong()
+        var keyStream: UByteArray = ubyteArrayOf()
 
-        for (i in 0 until (numberOfRounds+1)) {
-            initializeInternalState(key, nonce!!, counter)
-            for (j in 0 until 10) {
-                //Odd round
-                qr(0, 4, 8, 12)
-                qr(5, 9, 13, 1)
-                qr(10, 14, 2, 6)
-                qr(15, 3, 7, 11)
-                //Even round
-                qr(0, 1, 2, 3)
-                qr(5, 6, 7, 4)
-                qr(10, 11, 8, 9)
-                qr(15, 12, 13, 14)
-                println("After round $j the internal state is:")
-                internalState.forEachIndexed { index, uInt ->
-                    print("0x${uInt.toString(16).padStart(8, '0')} ")
-                    if (arrayListOf(3, 7, 11, 15).contains(index)) {
-                        println()
-                    }
+        for (i in m.indices) {
+            if (i % 64 == 0) {
+                if (i!=0) {
+                    runningCounter += 1u
                 }
+                keyStream = salsa20Expansion(key, nonce!!.toUByteArray()+runningCounter.toUByteArray().reversedArray())
             }
-            val newState: UIntArray = savedInternal.zip(internalState) { saveElement, newElement ->
-                saveElement + newElement
-            }.toUIntArray()
-            if (i < numberOfRounds) {
-                newState.map { it.toUByte() }.toUByteArray().copyInto(keyStream, destinationOffset = (i * 64))
-            }
-            else {
-                newState.map { it.toUByte() }.toUByteArray().copyInto(keyStream, destinationOffset = (i * 64), endIndex = (dataByteArray.size - (numberOfRounds * 64)) )
-            }
-            println("Key stream: ${keyStream.size}")
-            keyStream.forEachIndexed { index, uByte ->
-                print(uByte.toString(16).padStart(2, '0'))
-                if (arrayListOf(31, 63, 95, 127).contains(index)) {
-                    println()
-                }
-            }
-            counter++
+            result[i] = m[i] xor keyStream[i % 64]
         }
-        println("Key stream and the end: ")
-        keyStream.forEachIndexed { index, uByte ->
-            print(uByte.toString(16))
-            if (arrayListOf(31, 63, 95, 127).contains(index)) {
-                println()
-            }
-        }
-        val encoder = OneTimePad()
-
-        return encoder.encodeAndDecode(dataByteArray, keyStream)
+        return result
     }
 
 }
