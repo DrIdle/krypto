@@ -1,19 +1,20 @@
 package krypto.hash
 
-import krypto.utils.littleEndian
 import krypto.utils.toUByteArray
 import krypto.utils.toUInt
+import kotlin.math.abs
+import kotlin.math.sin
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class MD5: SHA1() {
 
-    private var h0: UInt = 0x67452301u
+    private var a0: UInt = 0x67452301u
     //private var h0: UInt = 0x01234567u
-    private var h1: UInt = 0xefcdab89u
+    private var b0: UInt = 0xefcdab89u
     //private var h1: UInt = 0x89abcdefu
-    private var h2: UInt = 0x98badcfeu
+    private var c0: UInt = 0x98badcfeu
     //private var h2: UInt = 0xfedcba98u
-    private var h3: UInt = 0x10325476u
+    private var d0: UInt = 0x10325476u
     //private var h3: UInt = 0x76543210u
 
     private var s: IntArray = intArrayOf(
@@ -56,11 +57,11 @@ class MD5: SHA1() {
         }
     }
 
-    private fun g(i: Int): Int {
+    fun g(i: Int): Int {
         return when(i) {
             in 0..15 -> i
-            in 16..31 -> (5 * i + 1) % 16
-            in 32..47 -> (3 * i + 5) % 16
+            in 16..31 -> ((5 * i) + 1) % 16
+            in 32..47 -> ((3 * i) + 5) % 16
             in 48..63 -> (7 * i) % 16
             else -> {
                 throw RuntimeException("Bad i provided")
@@ -68,61 +69,56 @@ class MD5: SHA1() {
         }
     }
 
+    override fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
+        // Concat length of the message
+        val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()
+        val originalLengthRight = (((originalLength * 8u) shl 32) shr 32).toUInt().toUByteArray()
+
+        val wholeNumber = originalLengthRight + originalLengthLeft
+        msgCopy.addAll(wholeNumber)
+    }
+
     override fun digestGeneration(msgCopy: MutableList<UByte>): UIntArray {
-        msgCopy.forEachIndexed { index, uByte ->
-            print(uByte.toString(2).padStart(8, '0')+" ")
-            if ( (index+1) % 5 == 0) {
-                println()
-            }
-        }
         val chunks = msgCopy.chunked(64)
         chunks.forEach { uByteList ->
 
-            val m = uByteList.chunked(4).map { it.toUByteArray().toUInt() }.toUIntArray()
+            val m = uByteList.chunked(4).mapIndexed { index, uBytes ->
+                if( index < 14) {
+                    uBytes.toUByteArray().reversedArray().toUInt()
+                } else {
+                    uBytes.toUByteArray().toUInt()
+                }
+            }.toUIntArray()
 
-            println()
-            m.forEachIndexed { index, uInt ->
-                println("m_$index - ${uInt.toString(16).padStart(8,'0')}")
-            }
-
-            var a = h0
-            var b = h1
-            var c = h2
-            var d = h3
+            var a = a0
+            var b = b0
+            var c = c0
+            var d = d0
 
             for (i in 0..63) {
-                var f: UInt = f(b, c, d, i)
-                //println("f = ${f.toString(16).padStart(8, '0')}")
+                val f: UInt = f(b, c, d, i)
                 val g: Int = g(i)
-                //println("g = ${g.toString(16).padStart(8, '0')}")
-                //println("f + a = ${(f+a).toString(16).padStart(8, '0')}")
-                f = (f + a + k(i) + m[g]).rotateLeft(s[i])
-                //println("f new value = ${f.toString(16).padStart(8, '0')}")
+
+                val temp = b + (f + a + k(i) + m[g]).rotateLeft(s[i])
+
                 a = d
                 d = c
                 c = b
-                b += f
-                //println(f.rotateLeft(s[i]).toString(16).padStart(8, '0'))
-                if (arrayListOf(15, 31, 47, 63).contains(i)) {
-                    println(
-                        "a=${a.toInt().toString(10)} " +
-                        "b=${b.toInt().toString(10)} " +
-                        "c=${c.toInt().toString(10)} " +
-                        "d=${d.toInt().toString(10)}"
-                    )
-                    println(
-                        "a=${a.toString(16).padStart(8, '0')} " +
-                        "b=${b.toString(16).padStart(8, '0')} " +
-                        "c=${c.toString(16).padStart(8, '0')} " +
-                        "d=${d.toString(16).padStart(8, '0')}")
-                }
+                b = temp
             }
 
-            h0 += a
-            h1 += b
-            h2 += c
-            h3 += d
+            a0 += a
+            b0 += b
+            c0 += c
+            d0 += d
         }
-        return uintArrayOf(h0, h1, h2, h3)
+
+        var res = uintArrayOf(a0, b0, c0, d0)
+
+        res = res.map {
+            it.toUByteArray().reversedArray().toUInt()
+        }.toUIntArray()
+
+        return res
     }
 }

@@ -71,8 +71,7 @@ open class SHA1 {
         val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()
         val originalLengthRight = (((originalLength * 8u) shl 32) shr 32).toUInt().toUByteArray()
 
-        msgCopy.addAll(originalLengthLeft)
-        msgCopy.addAll(originalLengthRight)
+        msgCopy.addAll(originalLengthLeft + originalLengthRight)
     }
 
     open fun digestGeneration(msgCopy: MutableList<UByte>): UIntArray {

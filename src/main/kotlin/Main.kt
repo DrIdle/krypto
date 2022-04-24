@@ -1,6 +1,11 @@
 import krypto.ciphers.stream_ciphers.Salsa20
 import krypto.hash.MD5
 import krypto.hash.SHA1
+import java.security.MessageDigest
+
+
+fun md5(str: String): ByteArray = MessageDigest.getInstance("MD5").digest(str.toByteArray(Charsets.US_ASCII))
+fun ByteArray.toHex() = joinToString(separator = "") { byte -> "%02x".format(byte) }
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun main() {
@@ -66,10 +71,11 @@ fun main() {
     //val ciphertext = testEncoder.encodeAndDecode(textArray)
 
     val md5 = MD5()
-    val hash = md5.hash("They are deterministic".toByteArray(charset = Charsets.US_ASCII).toUByteArray())
+    val hash = md5.hash("test".toByteArray().toUByteArray())
+
     println()
     println(hash)
-
-
+    println("Should be: ")
+    println(md5("test").toHex())
 
 }
