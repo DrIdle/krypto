@@ -25,7 +25,7 @@ fun String.toUByteArray(): UByteArray {
         throw Exception("The size of the string must be a multiple of 8")
     }
     return this.chunked(8).map {
-        it.toUByte()
+        it.toUByte(2)
     }.toUByteArray()
 }
 
@@ -61,6 +61,15 @@ fun UByteArray.littleEndian(): UInt {
     }
     return this[0] + (this[1].toUInt() shl 8) + (this[2].toUInt() shl 16) + (this[3].toUInt() shl 24)
 
+}
+
+@OptIn(ExperimentalUnsignedTypes::class)
+fun UByteArray.toBinaryStringRep(): String {
+    val sb = StringBuilder()
+    this.forEach {
+        sb.append(it.toString(2).padStart(8, '0'))
+    }
+    return sb.toString()
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)

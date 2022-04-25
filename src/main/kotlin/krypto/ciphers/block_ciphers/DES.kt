@@ -1,16 +1,13 @@
 package krypto.ciphers.block_ciphers
 
+import krypto.utils.toBinaryStringRep
 import krypto.utils.toUByteArray
-import kotlin.math.PI
+import kotlin.math.pow
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class DES(private val key: UByteArray) {
 
-    init {
-        if(key.size != 8) {
-            throw IllegalArgumentException("Size of key must be 8 bytes (64 bit)")
-        }
-    }
+    private val subKeys: List<String>
 
     private val IP = intArrayOf(
         58, 50, 42, 34, 26, 18, 10, 2,
@@ -56,61 +53,48 @@ class DES(private val key: UByteArray) {
         22, 11,  4, 25
     )
 
-    private val S1 = intArrayOf(
-        14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
-        0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
-        4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0,
-        15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13
-    )
-
-    private val S2 = intArrayOf(
-        15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10,
-        3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5,
-        0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15,
-        13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9
-    )
-
-    private val S3 = intArrayOf(
-        10,  0,  9, 14,  6,  3, 15,  5,  1, 13, 12,  7, 11,  4,  2,  8,
-        13,  7,  0,  9,  3,  4,  6, 10,  2,  8,  5, 14, 12, 11, 15,  1,
-        13,  6,  4,  9,  8, 15,  3,  0, 11,  1,  2, 12,  5, 10, 14,  7,
-        1, 10, 13,  0,  6,  9,  8,  7,  4, 15, 14,  3, 11,  5,  2, 12
-    )
-
-    private val S4 = intArrayOf(
-        7, 13, 14,  3,  0,  6,  9, 10,  1,  2,  8,  5, 11, 12,  4, 15,
-        13,  8, 11,  5,  6, 15,  0,  3,  4,  7,  2, 12,  1, 10, 14,  9,
-        10,  6,  9,  0, 12, 11,  7, 13, 15,  1,  3, 14,  5,  2,  8,  4,
-        3, 15,  0,  6, 10,  1, 13,  8,  9,  4,  5, 11, 12,  7,  2, 14
-    )
-
-    private val S5 = intArrayOf(
-        2, 12,  4,  1,  7, 10, 11,  6,  8,  5,  3, 15, 13,  0, 14,  9,
-        14, 11,  2, 12,  4,  7, 13,  1,  5,  0, 15, 10,  3,  9,  8,  6,
-        4,  2,  1, 11, 10, 13,  7,  8, 15,  9, 12,  5,  6,  3,  0, 14,
-        11,  8, 12,  7,  1, 14,  2, 13,  6, 15,  0,  9, 10,  4,  5,  3
-    )
-
-    private val S6 = intArrayOf(
-        12,  1, 10, 15,  9,  2,  6,  8,  0, 13,  3,  4, 14,  7,  5, 11,
-        10, 15,  4,  2,  7, 12,  9,  5,  6,  1, 13, 14,  0, 11,  3,  8,
-        9, 14, 15,  5,  2,  8, 12,  3,  7,  0,  4, 10,  1, 13, 11,  6,
-        4,  3,  2, 12,  9,  5, 15, 10, 11, 14,  1,  7,  6,  0,  8, 13
-    )
-
-    private val S7 = intArrayOf(
-        4, 11,  2, 14, 15,  0,  8, 13,  3, 12,  9,  7,  5, 10,  6,  1,
-        13,  0, 11,  7,  4,  9,  1, 10, 14,  3,  5, 12,  2, 15,  8,  6,
-        1,  4, 11, 13, 12,  3,  7, 14, 10, 15,  6,  8,  0,  5,  9,  2,
-        6, 11, 13,  8,  1,  4, 10,  7,  9,  5,  0, 15, 14,  2,  3, 12
-    )
-
-    private val S8 = intArrayOf(
-        13,  2,  8,  4,  6, 15, 11,  1, 10,  9,  3, 14,  5,  0, 12,  7,
-        1, 15, 13,  8, 10,  3,  7,  4, 12,  5,  6, 11,  0, 14,  9,  2,
-        7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8,
-        2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11
-    )
+    private val sBoxes = arrayOf(
+        intArrayOf(
+            14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
+            0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
+            4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0,
+            15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13),
+        intArrayOf(
+            15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10,
+            3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5,
+            0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15,
+            13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9),
+        intArrayOf(
+            10,  0,  9, 14,  6,  3, 15,  5,  1, 13, 12,  7, 11,  4,  2,  8,
+            13,  7,  0,  9,  3,  4,  6, 10,  2,  8,  5, 14, 12, 11, 15,  1,
+            13,  6,  4,  9,  8, 15,  3,  0, 11,  1,  2, 12,  5, 10, 14,  7,
+            1, 10, 13,  0,  6,  9,  8,  7,  4, 15, 14,  3, 11,  5,  2, 12),
+        intArrayOf(
+            7, 13, 14,  3,  0,  6,  9, 10,  1,  2,  8,  5, 11, 12,  4, 15,
+            13,  8, 11,  5,  6, 15,  0,  3,  4,  7,  2, 12,  1, 10, 14,  9,
+            10,  6,  9,  0, 12, 11,  7, 13, 15,  1,  3, 14,  5,  2,  8,  4,
+            3, 15,  0,  6, 10,  1, 13,  8,  9,  4,  5, 11, 12,  7,  2, 14
+        ),
+        intArrayOf(
+            2, 12,  4,  1,  7, 10, 11,  6,  8,  5,  3, 15, 13,  0, 14,  9,
+            14, 11,  2, 12,  4,  7, 13,  1,  5,  0, 15, 10,  3,  9,  8,  6,
+            4,  2,  1, 11, 10, 13,  7,  8, 15,  9, 12,  5,  6,  3,  0, 14,
+            11,  8, 12,  7,  1, 14,  2, 13,  6, 15,  0,  9, 10,  4,  5,  3),
+        intArrayOf(
+            12,  1, 10, 15,  9,  2,  6,  8,  0, 13,  3,  4, 14,  7,  5, 11,
+            10, 15,  4,  2,  7, 12,  9,  5,  6,  1, 13, 14,  0, 11,  3,  8,
+            9, 14, 15,  5,  2,  8, 12,  3,  7,  0,  4, 10,  1, 13, 11,  6,
+            4,  3,  2, 12,  9,  5, 15, 10, 11, 14,  1,  7,  6,  0,  8, 13),
+        intArrayOf(
+            4, 11,  2, 14, 15,  0,  8, 13,  3, 12,  9,  7,  5, 10,  6,  1,
+            13,  0, 11,  7,  4,  9,  1, 10, 14,  3,  5, 12,  2, 15,  8,  6,
+            1,  4, 11, 13, 12,  3,  7, 14, 10, 15,  6,  8,  0,  5,  9,  2,
+            6, 11, 13,  8,  1,  4, 10,  7,  9,  5,  0, 15, 14,  2,  3, 12),
+        intArrayOf(
+            13,  2,  8,  4,  6, 15, 11,  1, 10,  9,  3, 14,  5,  0, 12,  7,
+            1, 15, 13,  8, 10,  3,  7,  4, 12,  5,  6, 11,  0, 14,  9,  2,
+            7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8,
+            2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11))
 
     private val PC1 = intArrayOf(
         57, 49, 41, 33, 25, 17,  9,
@@ -137,44 +121,94 @@ class DES(private val key: UByteArray) {
     private val shifts = intArrayOf(
         1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
     )
+    
+    init {
+        if(key.size != 8) {
+            throw IllegalArgumentException("Size of key must be 8 bytes (64 bit)")
+        }
+        subKeys = generateSubKeys()
+    }
+
+    private fun generateSubKeys(): List<String> {
+        val res = MutableList<String>(16) { index ->
+            val selectedBits = permutation(key.toBinaryStringRep(), PC1)
+            var left = selectedBits.substring(0, 28)
+            var right = selectedBits.substring(28)
+            left = rotateLeftWithGiven(left, shifts[index])
+            right = rotateLeftWithGiven(right, shifts[index])
+            permutation(left + right, PC2)
+        }.toList()
+        return res
+    }
+
+    fun rotateLeftWithGiven(s: String, i: Int): String {
+        var sInt = s.toUInt(2)
+        sInt = sInt.rotateLeft(i)
+        val sIntLast28 = sInt and 0xFFFFFFFu
+        val shiftOverflowMask = 2.toDouble().pow(i.toDouble()).toUInt() - 1u shl 28
+        val overflow = sInt and shiftOverflowMask
+        val overflowShiftBack = overflow shr 28
+        sInt = sIntLast28 or overflowShiftBack
+        return sInt.toString(2).padStart(28, '0').takeLast(28)
+    }
 
     fun encrypt(msg: UByteArray): UByteArray {
         require(msg.size == 8)
 
-        val sb = StringBuilder()
-        msg.forEach {
-            sb.append(it.toString(2).padStart(8, '0'))
-        }
-
-        var msgString = sb.toString()
-        msgString = permutate(msgString, IP)
+        var msgString = msg.toBinaryStringRep()
+        msgString = permutation(msgString, IP)
 
         var left = msgString.substring(0, msgString.length / 2)
         var right = msgString.substring(msgString.length / 2, msgString.length)
 
+        println("L\tR")
         for (i in 0 until 16) {
-            right = feistelFunction(right, key, i)
-            left = (left.toUInt() xor right.toUInt()).toString(2).padStart(32, '0')
+            right = feistelFunction(right, i)
+            println("${left.toUInt(2).toString(16).padStart(8, '0')}\t" +
+                    right.toUInt(2).toString(16).padStart(8, '0')
+            )
+            left = (left.toUInt(2) xor right.toUInt(2))
+                .toString(2).padStart(32, '0').takeLast(32)
             val temp = left
             left = right
             right = temp
         }
 
         msgString = left + right
-        val result = permutate(msgString, IPinv)
+        val result = permutation(msgString, IPinv)
 
         return result.toUByteArray()
     }
 
-    private fun feistelFunction(right: String, key: UByteArray, i: Int): String {
-        return ""
+    fun feistelFunction(right: String, i: Int): String {
+        val extendedRight = extended(right)
+        val subKey = subKeys[i]
+        val substitutionInput = (extendedRight.toULong(2) xor subKey.toULong(2))
+            .toString(2).padStart(48, '0').takeLast(48)
+        val substitutionBlocks = substitutionInput.chunked(6)
+        val sb = StringBuilder()
+        substitutionBlocks.forEachIndexed { index, s ->
+            sb.append(getOutputFromGivenSBox(s, index))
+        }
+        return permutation(sb.toString(), P)
     }
 
-    private fun permutate(msgString: String, p: IntArray): String {
-        val sb = StringBuilder()
-        for (i in msgString.indices) {
-            sb.append(msgString[i])
+    fun getOutputFromGivenSBox(s: String, index: Int): Any {
+        val row = s.substring(0,2).toInt(2)
+        val column = s.substring(2).toInt(2)
+        //println("s=$s row=$row column=$column index=$index")
+        return sBoxes[index][row * 16 + column].toString(2).padStart(4, '0')
+    }
+
+    private fun extended(right: String): String {
+        return permutation(right, E)
+    }
+
+    fun permutation(msgString: String, p: IntArray): String {
+        val charSeq = CharArray(p.size)
+        for (i in p.indices) {
+            charSeq[i] = msgString[p[i]-1]
         }
-        return sb.toString()
+        return charSeq.concatToString()
     }
 }
