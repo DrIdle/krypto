@@ -134,9 +134,12 @@ class DES(private val key: UByteArray) {
             val selectedBits = permutation(key.toBinaryStringRep(), PC1)
             var left = selectedBits.substring(0, 28)
             var right = selectedBits.substring(28)
-            left = rotateLeftWithGiven(left, shifts[index])
-            right = rotateLeftWithGiven(right, shifts[index])
-            permutation(left + right, PC2)
+            for (i in 0 until index+1) {
+                left = rotateLeftWithGiven(left, shifts[i])
+                right = rotateLeftWithGiven(right, shifts[i])
+            }
+            val new = permutation(left + right, PC2)
+            new
         }.toList()
         return res
     }
@@ -161,18 +164,14 @@ class DES(private val key: UByteArray) {
         var left = msgString.substring(0, msgString.length / 2)
         var right = msgString.substring(msgString.length / 2, msgString.length)
 
-        println("L\tR")
         for (i in 0 until 16) {
             val temp = right
             right = feistelFunction(right, i)
             right = (left.toUInt(2) xor right.toUInt(2)).toString(2).padStart(32, '0')
             left = temp
-            println("${left.toUInt(2).toString(2).padStart(32, '0')}\t" +
-                    right.toUInt(2).toString(2).padStart(32, '0'))
-            //right = temp
         }
 
-        msgString = left + right
+        msgString = right + left
         val result = permutation(msgString, IPinv)
 
         return result.toUByteArray()
@@ -192,9 +191,8 @@ class DES(private val key: UByteArray) {
     }
 
     fun getOutputFromGivenSBox(s: String, index: Int): Any {
-        val row = s.substring(0,2).toInt(2)
-        val column = s.substring(2).toInt(2)
-        //println("s=$s row=$row column=$column index=$index")
+        val row = (s.first().toString() + s.last().toString()).toInt(2)
+        val column = s.substring(1, s.length-1).toInt(2)
         return sBoxes[index][row * 16 + column].toString(2).padStart(4, '0')
     }
 
