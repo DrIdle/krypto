@@ -19,6 +19,16 @@ fun String.strxor(key:String, charset: Charset): String {
     return resultByteArray.toString(charset = charset)
 }
 
+@OptIn(ExperimentalUnsignedTypes::class)
+fun String.toUByteArray(): UByteArray {
+    if (this.length % 8 != 0) {
+        throw Exception("The size of the string must be a multiple of 8")
+    }
+    return this.chunked(8).map {
+        it.toUByte()
+    }.toUByteArray()
+}
+
 fun ByteArray.toInt(): Int {
     val newArray: ByteArray
     if (this.size > 4) {
