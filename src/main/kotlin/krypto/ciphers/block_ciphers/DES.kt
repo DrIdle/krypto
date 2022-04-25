@@ -163,15 +163,13 @@ class DES(private val key: UByteArray) {
 
         println("L\tR")
         for (i in 0 until 16) {
+            val temp = right
             right = feistelFunction(right, i)
-            println("${left.toUInt(2).toString(16).padStart(8, '0')}\t" +
-                    right.toUInt(2).toString(16).padStart(8, '0')
-            )
-            left = (left.toUInt(2) xor right.toUInt(2))
-                .toString(2).padStart(32, '0').takeLast(32)
-            val temp = left
-            left = right
-            right = temp
+            right = (left.toUInt(2) xor right.toUInt(2)).toString(2).padStart(32, '0')
+            left = temp
+            println("${left.toUInt(2).toString(2).padStart(32, '0')}\t" +
+                    right.toUInt(2).toString(2).padStart(32, '0'))
+            //right = temp
         }
 
         msgString = left + right

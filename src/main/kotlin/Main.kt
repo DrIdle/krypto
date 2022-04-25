@@ -2,8 +2,8 @@ import krypto.ciphers.block_ciphers.DES
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun main() {
-    val testKey = ubyteArrayOf(0x10u, 0x31u, 0x6Eu, 0x02u, 0x8Cu, 0x8Fu, 0x3Bu, 0x4au)
-    val testMsg = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
+    val testKey = ubyteArrayOf(0b00010011u, 0b00110100u, 0b01010111u, 0b01111001u, 0b10011011u, 0b10111100u, 0b11011111u, 0b11110001u)
+    val testMsg = ubyteArrayOf(0x01u,0x23u,0x45u,0x67u,0x89u,0xABu,0xCDu,0xEFu)
 
     val encoder = DES(testKey)
     val cipherText = encoder.encrypt(testMsg)
