@@ -2,13 +2,23 @@ package krypto.ciphers.block_ciphers
 
 import krypto.utils.toBinaryStringRep
 import krypto.utils.toUByteArray
+import krypto.utils.toULong
 import kotlin.math.pow
+import kotlin.random.Random
+import kotlin.random.nextULong
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class DES(private val key: UByteArray) {
+class DES(private val key: UByteArray, val mode: String) {
 
     private val subKeys: List<String>
 
+    private val modes: List<String> = listOf("ECB", "CBC")
+
+    var iv: UByteArray = UByteArray(8)
+    set(value) {
+        require(value.size == 8) {"IV must be of size 8 bytes (64 bit)"}
+        field = value
+    }
     private val IP = intArrayOf(
         58, 50, 42, 34, 26, 18, 10, 2,
         60, 52, 44, 36, 28, 20, 12, 4,
@@ -123,9 +133,8 @@ class DES(private val key: UByteArray) {
     )
     
     init {
-        if(key.size != 8) {
-            throw IllegalArgumentException("Size of key must be 8 bytes (64 bit)")
-        }
+        require(key.size == 8) {"Size of the key must be 8 bytes (64 bit)"}
+        require(modes.contains(mode)) {"Mode has to be part of $modes"}
         subKeys = generateSubKeys()
     }
 
@@ -155,8 +164,8 @@ class DES(private val key: UByteArray) {
         return sInt.toString(2).padStart(28, '0').takeLast(28)
     }
 
-    fun encrypt(msg: UByteArray): UByteArray {
-        require(msg.size == 8)
+    fun encryptBlock(msg: UByteArray, encrypt: Boolean = true): UByteArray {
+        require(msg.size == 8) {"Size of the message block must be 8 bytes (64 bit)"}
 
         var msgString = msg.toBinaryStringRep()
         msgString = permutation(msgString, IP)
@@ -166,7 +175,11 @@ class DES(private val key: UByteArray) {
 
         for (i in 0 until 16) {
             val temp = right
-            right = feistelFunction(right, i)
+            right = if (encrypt) {
+                feistelFunction(right, i)
+            } else {
+                feistelFunction(right, 15-i)
+            }
             right = (left.toUInt(2) xor right.toUInt(2)).toString(2).padStart(32, '0')
             left = temp
         }
@@ -175,6 +188,10 @@ class DES(private val key: UByteArray) {
         val result = permutation(msgString, IPinv)
 
         return result.toUByteArray()
+    }
+
+    fun decryptBlock(c: UByteArray): UByteArray {
+        return encryptBlock(c, false)
     }
 
     fun feistelFunction(right: String, i: Int): String {
@@ -206,5 +223,41 @@ class DES(private val key: UByteArray) {
             charSeq[i] = msgString[p[i]-1]
         }
         return charSeq.concatToString()
+    }
+
+    fun encrypt(msg: UByteArray): UByteArray {
+        if ((mode == "ECB") or (mode == "CBC")) {
+            var paddedMsg = msg
+            if (msg.size % 64 != 0) {
+                paddedMsg = pad(msg.toMutableList())
+            }
+            if (mode == "ECB") {
+                return paddedMsg.toList().chunked(8).map {
+                    encryptBlock(it.toUByteArray())
+                }.flatten().toUByteArray()
+            }
+            if (mode == "CBC") {
+                iv = Random.nextULong().toUByteArray()
+                iv.forEach { print("${it.toString(16).padStart(2, '0')} ") }
+                println()
+                val blocks = paddedMsg.toList().chunked(8).toMutableList()
+                blocks[0] = (blocks[0].toUByteArray().toULong() xor iv.toULong()).toUByteArray().toList()
+                return blocks.map {
+                    encryptBlock(it.toUByteArray())
+                }.flatten().toUByteArray()
+            }
+        }
+        return ubyteArrayOf()
+    }
+
+    private fun pad(msg: MutableList<UByte>): UByteArray {
+        while(msg.size % 64 == 0) {
+            msg.add(0u)
+        }
+        return msg.toUByteArray()
+    }
+
+    fun decrypt(c: UByteArray): UByteArray {
+        return ubyteArrayOf()
     }
 }

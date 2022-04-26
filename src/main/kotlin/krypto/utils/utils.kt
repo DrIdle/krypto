@@ -32,7 +32,7 @@ fun String.toUByteArray(): UByteArray {
 fun ByteArray.toInt(): Int {
     val newArray: ByteArray
     if (this.size > 4) {
-        throw Exception("ByteArray must be of size 4")
+        throw Exception("ByteArray must be of max size 4")
     } else {
         newArray = ByteArray(4)
         this.copyInto(destination = newArray, destinationOffset = (4 - this.size))
@@ -81,7 +81,7 @@ fun UInt.revLittleEndian(): UByteArray {
 fun UByteArray.toUInt(): UInt {
     val newArray: UByteArray
     if (this.size > 4) {
-        throw Exception("ByteArray must be of size 4")
+        throw Exception("ByteArray must be of max size 4")
     } else {
         newArray = UByteArray(4)
         this.copyInto(destination = newArray, destinationOffset = (4 - this.size))
@@ -89,6 +89,22 @@ fun UByteArray.toUInt(): UInt {
     var result: UInt = 0u
     for (i in newArray.indices) {
         result = result or (newArray[i].toUInt() shl 8 * ((newArray.size - 1)-i))
+    }
+    return result
+}
+
+@OptIn(ExperimentalUnsignedTypes::class)
+fun UByteArray.toULong(): ULong {
+    val newArray: UByteArray
+    if (this.size > 8) {
+        throw Exception("ByteArray must be of max size 8")
+    } else {
+        newArray = UByteArray(8)
+        this.copyInto(destination = newArray, destinationOffset = (8 - this.size))
+    }
+    var result: ULong = 0u
+    for (i in newArray.indices) {
+        result = result or (newArray[i].toULong() shl 8 * ((newArray.size - 1)-i))
     }
     return result
 }
