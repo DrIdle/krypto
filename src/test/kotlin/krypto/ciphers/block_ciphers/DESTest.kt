@@ -13,7 +13,7 @@ class DESTest {
         val testInput1 = "0000000000001101011101000110"
         val testInput2 = "1100000000001101011101000110"
         val testRotationCount = 2
-        val encoder = DES(testKey)
+        val encoder = DES(testKey, "ECB")
         val output1 = "0000000000110101110100011000"
         val output2 = "0000000000110101110100011011"
         Assertions.assertEquals(output1, encoder.rotateLeftWithGiven(testInput1, testRotationCount))
@@ -25,7 +25,7 @@ class DESTest {
         val testInput = "0123456789"
         val testPermutation = intArrayOf(10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 
-        val encoder = DES(testKey)
+        val encoder = DES(testKey, "ECB")
         val output = "9876543210"
         Assertions.assertEquals(output, encoder.permutation(testInput,testPermutation))
     }
