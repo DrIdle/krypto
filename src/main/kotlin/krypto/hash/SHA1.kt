@@ -69,6 +69,10 @@ open class SHA1: AbstractHash() {
         }.flatten().toUByteArray()
     }
 
+    override fun getInstance(): AbstractHash {
+        return SHA1()
+    }
+
     open fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
         // Concat length of the message
         val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()

@@ -1,4 +1,8 @@
 import krypto.ciphers.block_ciphers.DES
+import krypto.hash.MD5
+import krypto.hash.SHA1
+import krypto.mac.HMAC
+import krypto.utils.hexdigest
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun main() {
@@ -34,4 +38,35 @@ fun main() {
     println()
     println("Do they match?: ${testMsg.toList() == plainText2.toList()}")
     println()
+
+    val testKeyForHMAC = "key"
+    val testMsgForHMAC = "The quick brown fox jumps over the lazy dog"
+    val hmac = HMAC(testKeyForHMAC.toByteArray(Charsets.US_ASCII).toUByteArray(), MD5())
+    val msgDigest = hmac.generate(testMsgForHMAC.toByteArray(Charsets.US_ASCII).toUByteArray())
+    println("MD5: ${msgDigest.hexdigest()}")
+
+    /*
+    val hmac2 = HMAC(testKeyForHMAC.toByteArray(Charsets.US_ASCII).toUByteArray(), SHA1())
+    val msgDigest2 = hmac2.generate(testMsgForHMAC.toByteArray(Charsets.US_ASCII).toUByteArray())
+    println("SHA1: ${msgDigest2.hexdigest()}")
+
+    val testKeyRFC = UByteArray(16) { _ -> 0x0bu}
+    val testMsgRFC = "Hi there"
+    val hmacRFC = HMAC(testKeyRFC, MD5())
+    val msgDigestRFC = hmacRFC.generate(testMsgRFC.toByteArray(Charsets.US_ASCII).toUByteArray())
+    println("RFC: ${msgDigestRFC.hexdigest()}")
+
+
+    val msg = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    val hahser = MD5()
+    val digest = hahser.hash(msg.toByteArray(Charsets.US_ASCII).toUByteArray())
+    println(digest.hexdigest())
+
+     */
 }

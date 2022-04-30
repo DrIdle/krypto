@@ -125,4 +125,8 @@ class MD5: SHA1() {
 
         return res
     }
+
+    override fun getInstance(): AbstractHash {
+        return MD5()
+    }
 }

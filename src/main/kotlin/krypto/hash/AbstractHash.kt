@@ -8,4 +8,6 @@ abstract class AbstractHash {
     abstract fun digestSize(): Int
 
     abstract fun hash(m: UByteArray): UByteArray
+
+    abstract fun getInstance(): AbstractHash
 }
