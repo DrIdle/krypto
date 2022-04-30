@@ -4,7 +4,7 @@ import krypto.utils.toUByteArray
 import krypto.utils.toUInt
 
 @OptIn(ExperimentalUnsignedTypes::class)
-open class SHA1 {
+open class SHA1: AbstractHash() {
 
     // Constants used by SHA1
     private var H0: UInt = 0x67452301u
@@ -25,6 +25,14 @@ open class SHA1 {
         }
     }
 
+    override fun blockSize(): Int {
+        return 64
+    }
+
+    override fun digestSize(): Int {
+        return 20
+    }
+
     open fun f(b: UInt, c: UInt, d: UInt, i: Int): UInt {
         return when(i) {
             in 0..19 -> (b and c) or (b.inv() and d)
@@ -37,11 +45,11 @@ open class SHA1 {
         }
     }
 
-    fun hash(msg: UByteArray): String {
-        val originalLength = msg.size.toULong()
+    override fun hash(m: UByteArray): UByteArray {
+        val originalLength = m.size.toULong()
 
         // Padding
-        val msgCopy = msg.copyOf().toMutableList()
+        val msgCopy = m.copyOf().toMutableList()
         msgCopy.add(0x80.toUByte())
 
         var starter = originalLength * 8u + 8u
@@ -55,15 +63,10 @@ open class SHA1 {
 
         val hashValue = digestGeneration(msgCopy)
 
-        val hexDigest = StringBuilder()
-        hashValue.map { uIntElement ->
-            val uByteArray = uIntElement.toUByteArray()
-            uByteArray.forEach { uByte ->
-                hexDigest.append(uByte.toString(16).padStart(2, '0'))
-            }
-        }
 
-        return hexDigest.toString()
+        return hashValue.map { uIntElement ->
+            uIntElement.toUByteArray()
+        }.flatten().toUByteArray()
     }
 
     open fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {

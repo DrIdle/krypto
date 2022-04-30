@@ -230,7 +230,8 @@ class Salsa20Test {
             }.toUByteArray()
         }
 
-        val expectedOutput = "50EC2485637DB19C6E795E9C739382806F6DB320FE3D0444D56707D7B456457F3DB3E8D7065AF375A225A70951C8AB744EC4D595E85225F08E2BC03FE1C42567".lowercase()
+        val expectedOutput = ("50EC2485637DB19C6E795E9C739382806F6DB320FE3D0444D56707D7B456457" +
+                "F3DB3E8D7065AF375A225A70951C8AB744EC4D595E85225F08E2BC03FE1C42567").lowercase()
         val actualOutputSb = StringBuilder()
         xorDigest.forEach { actualOutputSb.append(it.toString(16).padStart(2,'0')) }
         Assertions.assertEquals(expectedOutput, actualOutputSb.toString())

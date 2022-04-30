@@ -41,6 +41,10 @@ class MD5: SHA1() {
         0x6fa87e4fu, 0xfe2ce6e0u, 0xa3014314u, 0x4e0811a1u,
         0xf7537e82u, 0xbd3af235u, 0x2ad7d2bbu, 0xeb86d391u)
 
+    override fun digestSize(): Int {
+        return 16
+    }
+
     override fun k(t: Int): UInt {
         return k[t]
     }

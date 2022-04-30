@@ -1,5 +1,6 @@
 package krypto.hash
 
+import krypto.utils.hexdigest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -13,7 +14,7 @@ class MD5Test {
         val md5 = MD5()
         val hash = md5.hash(uByteArray)
 
-        assertEquals("d41d8cd98f00b204e9800998ecf8427e", hash)
+        assertEquals("d41d8cd98f00b204e9800998ecf8427e", hash.hexdigest())
     }
 
     @Test
@@ -68,6 +69,6 @@ class MD5Test {
         val md5 = MD5()
         val hash = md5.hash(uByteArray)
 
-        assertEquals("9e107d9d372bb6826bd81d3542a419d6", hash)
+        assertEquals("9e107d9d372bb6826bd81d3542a419d6", hash.hexdigest())
     }
 }

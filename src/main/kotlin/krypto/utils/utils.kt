@@ -73,6 +73,15 @@ fun UByteArray.toBinaryStringRep(): String {
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
+fun UByteArray.hexdigest(): String {
+    val sb = StringBuilder()
+    this.forEach {
+        sb.append(it.toString(16).padStart(2, '0'))
+    }
+    return sb.toString()
+}
+
+@OptIn(ExperimentalUnsignedTypes::class)
 fun UInt.revLittleEndian(): UByteArray {
     return ubyteArrayOf(this.toUByte(), (this shr 8).toUByte(), (this shr 16).toUByte(), (this shr 24).toUByte())
 }
