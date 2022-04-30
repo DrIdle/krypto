@@ -147,7 +147,7 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
 
         for (i in m.indices) {
             if (i % 64 == 0) {
-                if (i!=0) {
+                if (i!=0) { // TODO: Move counter inc after keystream generation so we can remove the if statement
                     runningCounter += 1u
                 }
                 keyStream = salsa20Expansion(key, nonce!!.toUByteArray()+runningCounter.toUByteArray().reversedArray())

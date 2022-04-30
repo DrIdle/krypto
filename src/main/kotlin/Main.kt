@@ -11,17 +11,27 @@ fun main() {
         print(it.toString(16).padStart(2, '0'))
     }
     println()
-    val plainText = encoder.decryptBlock(cipherText)
+    val plainText = encoder.decrypt(cipherText)
     plainText.forEach {
         print(it.toString(16).padStart(2, '0'))
     }
+    println()
+    println("Do they match?: ${testMsg.toList() == plainText.toList()}")
     println()
 
     val testKey2 = ubyteArrayOf(0x10u, 0x31u, 0x6Eu, 0x02u,0x8Cu, 0x8Fu, 0x3Bu, 0x4Au)
     val testMsg2 = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
     val encoder2 = DES(testKey2, "CBC")
-    val cipherText2 = encoder2.encryptBlock(testMsg2)
+    val cipherText2 = encoder2.encrypt(testMsg)
     cipherText2.forEach {
         print(it.toString(16).padStart(2, '0'))
     }
+    println()
+    val plainText2 = encoder2.decrypt(cipherText2)
+    plainText2.forEach {
+        print(it.toString(16).padStart(2, '0'))
+    }
+    println()
+    println("Do they match?: ${testMsg.toList() == plainText2.toList()}")
+    println()
 }

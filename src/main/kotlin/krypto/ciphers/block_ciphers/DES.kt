@@ -8,13 +8,13 @@ import kotlin.random.Random
 import kotlin.random.nextULong
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class DES(private val key: UByteArray, val mode: String) {
+class DES(private val key: UByteArray, private val mode: String) {
 
     private val subKeys: List<String>
 
     private val modes: List<String> = listOf("ECB", "CBC")
 
-    var iv: UByteArray = UByteArray(8)
+    var iv: UByteArray = Random.nextULong().toUByteArray()
     set(value) {
         require(value.size == 8) {"IV must be of size 8 bytes (64 bit)"}
         field = value
@@ -226,38 +226,69 @@ class DES(private val key: UByteArray, val mode: String) {
     }
 
     fun encrypt(msg: UByteArray): UByteArray {
-        if ((mode == "ECB") or (mode == "CBC")) {
-            var paddedMsg = msg
-            if (msg.size % 64 != 0) {
-                paddedMsg = pad(msg.toMutableList())
-            }
-            if (mode == "ECB") {
-                return paddedMsg.toList().chunked(8).map {
-                    encryptBlock(it.toUByteArray())
-                }.flatten().toUByteArray()
-            }
-            if (mode == "CBC") {
-                iv = Random.nextULong().toUByteArray()
-                iv.forEach { print("${it.toString(16).padStart(2, '0')} ") }
-                println()
-                val blocks = paddedMsg.toList().chunked(8).toMutableList()
-                blocks[0] = (blocks[0].toUByteArray().toULong() xor iv.toULong()).toUByteArray().toList()
-                return blocks.map {
-                    encryptBlock(it.toUByteArray())
-                }.flatten().toUByteArray()
-            }
+        var paddedMsg = msg
+        paddedMsg = pad(msg.toMutableList())
+        if (mode == "ECB") {
+            return paddedMsg.toList().chunked(8).map {
+                encryptBlock(it.toUByteArray())
+            }.flatten().toUByteArray()
         }
-        return ubyteArrayOf()
+        if (mode == "CBC") {
+            val blocks = paddedMsg.toList().chunked(8).toMutableList()
+            val c : MutableList<List<UByte>> = mutableListOf(iv.toList())
+            blocks.forEachIndexed { index, uBytes ->
+                val encryptInputBlock = (c[index].toUByteArray().toULong() xor uBytes.toUByteArray().toULong()).toUByteArray()
+                encryptBlock(encryptInputBlock)
+                c.add(encryptInputBlock.toList())
+            }
+            return c.slice(1 .. blocks.size).flatten().toUByteArray()
+        }
+        throw IllegalStateException("Mode is incorrect")
     }
 
     private fun pad(msg: MutableList<UByte>): UByteArray {
-        while(msg.size % 64 == 0) {
+        // Adding 0x80 as the first byte of the padding
+        msg.add(0x80u)
+        // Make the length of the msg multiple of the block size with 0 bytes
+        while(msg.size % 8 != 0) {
             msg.add(0u)
         }
         return msg.toUByteArray()
     }
 
+    private fun removePadding(msg: MutableList<UByte>): UByteArray {
+        // Removing the 0 bytes from the end of the list
+        while (msg.last() == 0u.toUByte()) {
+            msg.removeLast()
+        }
+        // After the 0 bytes we have to remove the 0x80 byte, the last part of the padding
+        if (msg.last() != 0x80u.toUByte()) {
+            throw IllegalStateException("The padding is wrong")
+        } else {
+            msg.removeLast()
+        }
+        return msg.toUByteArray()
+    }
+
     fun decrypt(c: UByteArray): UByteArray {
+        if (mode == "ECB") {
+            val plaintext = c.toList().chunked(8).map {
+                decryptBlock(it.toUByteArray())
+            }.flatten().toMutableList()
+            return removePadding(plaintext)
+        }
+        if (mode == "CBC") {
+            val blocks = c.toList().chunked(8).toMutableList()
+            val blocksToXor = mutableListOf(iv.toList())
+            blocksToXor.addAll(blocks)
+            val msg = mutableListOf(iv.toList())
+            blocks.forEachIndexed { index, uBytes ->
+                decryptBlock(uBytes.toUByteArray())
+                val decryptedInputBlock = (blocksToXor[index].toUByteArray().toULong() xor uBytes.toUByteArray().toULong()).toUByteArray()
+                msg.add(decryptedInputBlock.toList())
+            }
+            return removePadding(msg.slice(1 .. blocks.size).flatten().toMutableList())
+        }
         return ubyteArrayOf()
     }
 }
