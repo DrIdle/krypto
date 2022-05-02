@@ -3,6 +3,7 @@ package krypto.hash
 import krypto.utils.hexdigest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class MD5Test {
@@ -27,6 +28,7 @@ class MD5Test {
         val testI2 = 16
         val testI3 = 32
         val testI4 = 48
+        val testI5 = 340
 
         val testOutput1 = 0x88888888u
         val testOutput2 = 0xffffffffu
@@ -39,6 +41,9 @@ class MD5Test {
         assertEquals(testOutput2.toString(16), md5.f(testValue1, testValue2, testValue3, testI2).toString(16))
         assertEquals(testOutput3.toString(16), md5.f(testValue1, testValue2, testValue3, testI3).toString(16))
         assertEquals(testOutput4.toString(16), md5.f(testValue1, testValue2, testValue3, testI4).toString(16))
+        assertThrows<RuntimeException> {
+            md5.f(testValue1, testValue2, testValue3, testI5)
+        }
     }
 
     @Test
@@ -47,6 +52,7 @@ class MD5Test {
         val testI2 = 16
         val testI3 = 32
         val testI4 = 48
+        val testI5 = 340
 
         val testOutput1 = 1
         val testOutput2 = 1
@@ -59,7 +65,9 @@ class MD5Test {
         assertEquals(testOutput2, md5.g(testI2))
         assertEquals(testOutput3, md5.g(testI3))
         assertEquals(testOutput4, md5.g(testI4))
-
+        assertThrows<RuntimeException> {
+            md5.k(testI5)
+        }
     }
 
     @Test

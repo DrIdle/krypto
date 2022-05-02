@@ -29,21 +29,6 @@ fun String.toUByteArray(): UByteArray {
     }.toUByteArray()
 }
 
-fun ByteArray.toInt(): Int {
-    val newArray: ByteArray
-    if (this.size > 4) {
-        throw Exception("ByteArray must be of max size 4")
-    } else {
-        newArray = ByteArray(4)
-        this.copyInto(destination = newArray, destinationOffset = (4 - this.size))
-    }
-    var result = 0
-    for (i in newArray.indices) {
-        result = result or (newArray[i].toInt() shl 8 * ((newArray.size - 1)-i))
-    }
-    return result
-}
-
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UInt.toUByteArray(): UByteArray {
     return ubyteArrayOf(shr(24).toUByte(), shr(16).toUByte(), shr(8).toUByte(),this.toUByte())

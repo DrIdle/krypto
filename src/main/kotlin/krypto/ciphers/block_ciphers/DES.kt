@@ -138,7 +138,7 @@ class DES(private val key: UByteArray, private val mode: String) {
         subKeys = generateSubKeys()
     }
 
-    private fun generateSubKeys(): List<String> {
+    internal fun generateSubKeys(): List<String> {
         val res = MutableList<String>(16) { index ->
             val selectedBits = permutation(key.toBinaryStringRep(), PC1)
             var left = selectedBits.substring(0, 28)
@@ -207,13 +207,13 @@ class DES(private val key: UByteArray, private val mode: String) {
         return permutation(sb.toString(), P)
     }
 
-    fun getOutputFromGivenSBox(s: String, index: Int): Any {
+    internal fun getOutputFromGivenSBox(s: String, index: Int): Any {
         val row = (s.first().toString() + s.last().toString()).toInt(2)
         val column = s.substring(1, s.length-1).toInt(2)
         return sBoxes[index][row * 16 + column].toString(2).padStart(4, '0')
     }
 
-    private fun extended(right: String): String {
+    internal fun extended(right: String): String {
         return permutation(right, E)
     }
 
@@ -246,7 +246,7 @@ class DES(private val key: UByteArray, private val mode: String) {
         throw IllegalStateException("Mode is incorrect")
     }
 
-    private fun pad(msg: MutableList<UByte>): UByteArray {
+    internal fun pad(msg: MutableList<UByte>): UByteArray {
         // Adding 0x80 as the first byte of the padding
         msg.add(0x80u)
         // Make the length of the msg multiple of the block size with 0 bytes
@@ -256,7 +256,7 @@ class DES(private val key: UByteArray, private val mode: String) {
         return msg.toUByteArray()
     }
 
-    private fun removePadding(msg: MutableList<UByte>): UByteArray {
+    internal fun removePadding(msg: MutableList<UByte>): UByteArray {
         // Removing the 0 bytes from the end of the list
         while (msg.last() == 0u.toUByte()) {
             msg.removeLast()
