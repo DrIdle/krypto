@@ -238,8 +238,8 @@ class DES(private val key: UByteArray, private val mode: String) {
             val c : MutableList<List<UByte>> = mutableListOf(iv.toList())
             blocks.forEachIndexed { index, uBytes ->
                 val encryptInputBlock = (c[index].toUByteArray().toULong() xor uBytes.toUByteArray().toULong()).toUByteArray()
-                encryptBlock(encryptInputBlock)
-                c.add(encryptInputBlock.toList())
+                val encryptedBlock = encryptBlock(encryptInputBlock)
+                c.add(encryptedBlock.toList())
             }
             return c.slice(1 .. blocks.size).flatten().toUByteArray()
         }
@@ -283,8 +283,8 @@ class DES(private val key: UByteArray, private val mode: String) {
             blocksToXor.addAll(blocks)
             val msg = mutableListOf(iv.toList())
             blocks.forEachIndexed { index, uBytes ->
-                decryptBlock(uBytes.toUByteArray())
-                val decryptedInputBlock = (blocksToXor[index].toUByteArray().toULong() xor uBytes.toUByteArray().toULong()).toUByteArray()
+                val interBlock = decryptBlock(uBytes.toUByteArray())
+                val decryptedInputBlock = (blocksToXor[index].toUByteArray().toULong() xor interBlock.toUByteArray().toULong()).toUByteArray()
                 msg.add(decryptedInputBlock.toList())
             }
             return removePadding(msg.slice(1 .. blocks.size).flatten().toMutableList())

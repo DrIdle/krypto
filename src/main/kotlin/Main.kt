@@ -25,7 +25,9 @@ fun main() {
 
     val testKey2 = ubyteArrayOf(0x10u, 0x31u, 0x6Eu, 0x02u,0x8Cu, 0x8Fu, 0x3Bu, 0x4Au)
     val testMsg2 = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
-    val encoder2 = DES(testKey2, "CBC")
+    val testIV = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
+    val encoder2 = DES(testKey, "CBC")
+    encoder2.iv = testIV
     val cipherText2 = encoder2.encrypt(testMsg)
     cipherText2.forEach {
         print(it.toString(16).padStart(2, '0'))

@@ -169,4 +169,28 @@ class DESTest {
 
         Assertions.assertEquals(testMsg.toList(), output.toList())
     }
+
+    @Test
+    fun `Encryption in CBC mode should work correctly`() {
+        val correctOutput = "85e813540f0ab405b8df615c66ca5b29"
+        val testIV = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
+
+        val encoder = DES(testKey, "CBC")
+        encoder.iv = testIV
+        val output = encoder.encrypt(testMsg)
+
+        Assertions.assertEquals(correctOutput, output.hexdigest())
+    }
+
+    @Test
+    fun `Decryption in CBC mode should work correctly`() {
+        val testInput = ubyteArrayOf(0x85u, 0xe8u, 0x13u, 0x54u, 0x0fu, 0x0au, 0xb4u, 0x05u, 0xb8u, 0xdfu, 0x61u, 0x5cu, 0x66u, 0xcau, 0x5bu, 0x29u)
+        val testIV = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
+
+        val encoder = DES(testKey, "CBC")
+        encoder.iv = testIV
+        val output = encoder.decrypt(testInput)
+
+        Assertions.assertEquals(testMsg.toList(), output.toList())
+    }
 }
