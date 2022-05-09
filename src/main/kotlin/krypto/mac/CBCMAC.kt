@@ -3,7 +3,7 @@ package krypto.mac
 import krypto.ciphers.block_ciphers.DES
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class CBCMAC(private val key: UByteArray): MACInterface {
+class CBCMAC(key: UByteArray): MACInterface {
 
     private val encoder = DES(key, "CBC")
 

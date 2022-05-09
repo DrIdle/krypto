@@ -3,7 +3,6 @@ package krypto.ciphers.stream_ciphers
 import krypto.utils.littleEndian
 import krypto.utils.revLittleEndian
 import krypto.utils.toUByteArray
-import kotlin.random.Random
 
 /**
  * This class implements the Salsa20 stream cipher
@@ -189,7 +188,7 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
      *
      * For a 16-byte long key the [tau] is used instead of [sigma] and key is used twice.
      *
-     * The [salsa20Hash] is called with the initial state to generated a block of the keystream.
+     * The [salsa20Hash] is called with the initial state to generate a block of the keystream.
      *
      * @param k The key to be used
      * @param n The nonce

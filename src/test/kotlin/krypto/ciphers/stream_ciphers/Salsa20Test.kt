@@ -7,7 +7,6 @@ import org.junit.jupiter.api.assertThrows
 @OptIn(ExperimentalUnsignedTypes::class)
 class Salsa20Test {
 
-    private val text = "ABC"
     private val salsaTestKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     private val salsaNonce: ULong = 0u
     private val charset = Charsets.US_ASCII

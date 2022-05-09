@@ -10,7 +10,7 @@ class MD5Test {
 
     @Test
     fun `The hash of the empty should be correct`() {
-        val testString: String = ""
+        val testString = ""
         val uByteArray = testString.toByteArray(charset = Charsets.US_ASCII).toUByteArray()
         val md5 = MD5()
         val hash = md5.hash(uByteArray)
@@ -72,7 +72,7 @@ class MD5Test {
 
     @Test
     fun `The hash of the well known string should be correct`() {
-        val testString: String = "The quick brown fox jumps over the lazy dog"
+        val testString = "The quick brown fox jumps over the lazy dog"
         val uByteArray = testString.toByteArray(charset = Charsets.US_ASCII).toUByteArray()
         val md5 = MD5()
         val hash = md5.hash(uByteArray)

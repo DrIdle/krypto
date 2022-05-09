@@ -193,7 +193,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * @return The subkeys as a list of string containing the bits(each string is 48 bits long)
      */
     internal fun generateSubKeys(): List<String> {
-        val res = MutableList<String>(16) { index ->
+        val res = MutableList(16) { index ->
             val selectedBits = permutation(key.toBinaryStringRep(), PC1)
             var left = selectedBits.substring(0, 28)
             var right = selectedBits.substring(28)
@@ -270,7 +270,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * Decrypting a block
      *
      * The decryption in DES is similar to the encryption. The only differences is that the subkeys are used in
-     * a reversed order. Therefore before calling [encryptBlock] we reverse the subkeys. After the method call we
+     * a reversed order. Therefore, before calling [encryptBlock] we reverse the subkeys. After the method call we
      * have to reorder the subkeys in the correct way.
      *
      * @param c The encrypted block
@@ -370,7 +370,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * @return The encrypted msg
      */
     override fun encrypt(msg: UByteArray): UByteArray {
-        var paddedMsg: UByteArray = pad(msg.toMutableList())
+        val paddedMsg: UByteArray = pad(msg.toMutableList())
         if (mode == "ECB") {
             return paddedMsg.toList().chunked(8).map {
                 encryptBlock(it.toUByteArray())

@@ -6,8 +6,8 @@ import krypto.hash.HashInterface
 class HMAC<T: HashInterface>(private val key: UByteArray, private val digest: T): MACInterface {
 
     override fun generate(msg: UByteArray): UByteArray {
-        val opad = UByteArray(digest.blockSize()) { _ -> 0x5cu}
-        val ipad = UByteArray(digest.blockSize()) { _ -> 0x36u}
+        val opad = UByteArray(digest.blockSize()) { 0x5cu}
+        val ipad = UByteArray(digest.blockSize()) { 0x36u}
 
         var kPrime = if (key.size > digest.blockSize()) {
             digest.getInstance().hash(key)

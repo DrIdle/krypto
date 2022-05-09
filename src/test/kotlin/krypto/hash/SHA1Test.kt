@@ -10,7 +10,7 @@ class SHA1Test {
 
     @Test
     fun `The hash of the empty should be correct`() {
-        val testString: String = ""
+        val testString = ""
         val uByteArray = testString.toByteArray(charset = Charsets.US_ASCII).toUByteArray()
         val sha1 = SHA1()
         val hash = sha1.hash(uByteArray)
@@ -20,7 +20,7 @@ class SHA1Test {
 
     @Test
     fun `The hash of the well known string should be correct`() {
-        val testString: String = "The quick brown fox jumps over the lazy dog"
+        val testString = "The quick brown fox jumps over the lazy dog"
         val uByteArray = testString.toByteArray(charset = Charsets.US_ASCII).toUByteArray()
         val sha1 = SHA1()
         val hash = sha1.hash(uByteArray)
