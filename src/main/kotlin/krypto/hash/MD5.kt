@@ -3,24 +3,33 @@ package krypto.hash
 import krypto.utils.toUByteArray
 import krypto.utils.toUInt
 
+/**
+ * This class implements the MD5 hash algorithm
+ *
+ * The MD5 algorithm was published in RFC-1321 (https://www.rfc-editor.org/rfc/rfc1321.html)
+ * Although the algorithm is considered unsafe, it's still widely used as a message digest algorithm.
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 class MD5: SHA1() {
 
+    // Constants used by MD5
     private var a0: UInt = 0x67452301u
-    //private var h0: UInt = 0x01234567u
     private var b0: UInt = 0xefcdab89u
-    //private var h1: UInt = 0x89abcdefu
     private var c0: UInt = 0x98badcfeu
-    //private var h2: UInt = 0xfedcba98u
     private var d0: UInt = 0x10325476u
-    //private var h3: UInt = 0x76543210u
 
+    /**
+     * The amount of rotation steps to be used during the main loop
+     */
     private var s: IntArray = intArrayOf(
         7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
         5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
         4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
         6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21)
 
+    /**
+     * The precomputed values of k to be used during the main loop
+     */
     private var k: UIntArray = uintArrayOf(
         0xd76aa478u, 0xe8c7b756u, 0x242070dbu, 0xc1bdceeeu,
         0xf57c0fafu, 0x4787c62au, 0xa8304613u, 0xfd469501u,
@@ -39,14 +48,33 @@ class MD5: SHA1() {
         0x6fa87e4fu, 0xfe2ce6e0u, 0xa3014314u, 0x4e0811a1u,
         0xf7537e82u, 0xbd3af235u, 0x2ad7d2bbu, 0xeb86d391u)
 
+    /**
+     * Gives back the digest size for this hash function
+     *
+     * @return The digest size
+     */
     override fun digestSize(): Int {
         return 16
     }
 
+    /**
+     * This function gives back the value of k based on given iteration number
+     *
+     * @param t The current iteration number in the main loop
+     * @return The value for this iteration
+     */
     override fun k(t: Int): UInt {
         return k[t]
     }
 
+    /**
+     * Calculates the output of the f function based on the value of [b], [c], [d] and on given iteration number
+     *
+     * @param b The value of b
+     * @param c The value of c
+     * @param d The value of d
+     * @param i The iteration number in the main loop
+     */
     override fun f(b: UInt, c: UInt, d: UInt, i: Int): UInt {
         return when(i) {
             in 0..15 -> (b and c) or (b.inv() and d)
@@ -59,6 +87,12 @@ class MD5: SHA1() {
         }
     }
 
+    /**
+     * This function gives back the value of k based on given iteration number
+     *
+     * @param i The current iteration number in the main loop
+     * @return The value for this iteration
+     */
     fun g(i: Int): Int {
         return when(i) {
             in 0..15 -> i
@@ -71,8 +105,13 @@ class MD5: SHA1() {
         }
     }
 
+    /**
+     * Concatenate the [originalLength] to the message as a 64-bit long integer with the second half concatenated first.
+     *
+     * @param originalLength The length of original message in bytes
+     * @param msgCopy The copy of the msg as a [MutableList]
+     */
     override fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
-        // Concat length of the message
         val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()
         val originalLengthRight = (((originalLength * 8u) shl 32) shr 32).toUInt().toUByteArray()
 
@@ -80,11 +119,29 @@ class MD5: SHA1() {
         msgCopy.addAll(wholeNumber)
     }
 
+    /**
+     * This function generates the digest of the msg
+     *
+     * First the msg is sliced into parts of 512 bit. For each of these groups, we create 16 32-bit long integers.
+     * (These integers have to be in little endian format).
+     * Then we initialize the variables a, b, c, d with [a0], [b0], [c0] and [d0]. After this we run a
+     * for loop for 80 iteration and update these variables. After the last iteration we add the values of a, b, c, d
+     * to [a0], [b0], [c0], [d0] and do this for the next 512 bit long group.
+     *
+     * After the last group the digest consists of [a0], [b0], [c0] and [d0] written next to each other, but they are
+     * in little endian format, so we have covert them to big endian.
+     *
+     * @param msgCopy The message whose digest is calculated
+     * @return The digest as a [UIntArray]
+     */
     override fun digestGeneration(msgCopy: MutableList<UByte>): UIntArray {
         val chunks = msgCopy.chunked(64)
         chunks.forEach { uByteList ->
 
+            // The generated 32-bit long integers have to be in little endian
             val m = uByteList.chunked(4).mapIndexed { index, uBytes ->
+                // The length is the last two 32-bit long integers. They shouldn't be reversed, because they were
+                // concatenated in reverse order
                 if( index < 14) {
                     uBytes.toUByteArray().reversedArray().toUInt()
                 } else {
@@ -117,6 +174,7 @@ class MD5: SHA1() {
 
         var res = uintArrayOf(a0, b0, c0, d0)
 
+        // The result is in little endian, so we should change it back to big endian
         res = res.map {
             it.toUByteArray().reversedArray().toUInt()
         }.toUIntArray()
