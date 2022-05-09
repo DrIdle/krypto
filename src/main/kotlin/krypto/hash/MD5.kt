@@ -2,8 +2,6 @@ package krypto.hash
 
 import krypto.utils.toUByteArray
 import krypto.utils.toUInt
-import kotlin.math.abs
-import kotlin.math.sin
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class MD5: SHA1() {
@@ -126,7 +124,7 @@ class MD5: SHA1() {
         return res
     }
 
-    override fun getInstance(): AbstractHash {
+    override fun getInstance(): HashInterface {
         return MD5()
     }
 }

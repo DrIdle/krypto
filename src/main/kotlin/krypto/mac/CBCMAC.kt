@@ -3,7 +3,7 @@ package krypto.mac
 import krypto.ciphers.block_ciphers.DES
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class CBCMAC(private val key: UByteArray) {
+class CBCMAC(private val key: UByteArray): MACInterface {
 
     private val encoder = DES(key, "CBC")
 
@@ -11,7 +11,7 @@ class CBCMAC(private val key: UByteArray) {
         encoder.iv = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
     }
 
-    fun generated(msg: UByteArray): UByteArray {
+    override fun generate(msg: UByteArray): UByteArray {
         return encoder.encrypt(msg).takeLast(8).toUByteArray()
     }
 }

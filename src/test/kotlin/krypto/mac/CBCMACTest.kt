@@ -3,7 +3,6 @@ package krypto.mac
 import krypto.utils.hexdigest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class CBCMACTest {
@@ -16,7 +15,7 @@ class CBCMACTest {
         val correctOutput = "b8df615c66ca5b29"
 
         val mac = CBCMAC(testKey)
-        val output = mac.generated(testMsg)
+        val output = mac.generate(testMsg)
 
         Assertions.assertEquals(correctOutput, output.hexdigest())
     }

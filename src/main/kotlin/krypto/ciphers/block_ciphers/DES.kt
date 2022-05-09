@@ -7,18 +7,42 @@ import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.random.nextULong
 
+/**
+ * The implementation of the Data Encryption Standard
+ *
+ * DES is a block cipher which was published by FIPS in 1999 as a standard for encryption of electronic data.
+ *
+ * The standard can be found here: [https://csrc.nist.gov/CSRC/media/Publications/fips/46/3/archive/1999-10-25/documents/fips46-3.pdf]
+ *
+ * @property key The key for the cipher (must be 8 bytes long)
+ * @property mode The mode of operation as string (with uppercase letters)
+ * @constructor Creates a DES instance
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
-class DES(private val key: UByteArray, private val mode: String) {
+class DES(private val key: UByteArray, private val mode: String): BlockCipherInterface {
 
-    private val subKeys: List<String>
+    /**
+     * The list containing the subkeys generated from the [key]
+     */
+    private var subKeys: List<String>
 
+    /**
+     * The list of accepted modes at the moment
+     */
     private val modes: List<String> = listOf("ECB", "CBC")
 
+    /**
+     * The initialization vector ([iv]) is not used in all modes.
+     */
     var iv: UByteArray = Random.nextULong().toUByteArray()
     set(value) {
         require(value.size == 8) {"IV must be of size 8 bytes (64 bit)"}
         field = value
     }
+
+    /**
+     * [IP] is used as the initial permutation during encryption and decryption
+     */
     private val IP = intArrayOf(
         58, 50, 42, 34, 26, 18, 10, 2,
         60, 52, 44, 36, 28, 20, 12, 4,
@@ -30,6 +54,9 @@ class DES(private val key: UByteArray, private val mode: String) {
         63, 55, 47, 39, 31, 23, 15, 7
     )
 
+    /**
+     * [IPinv] is used as the final permutation during encryption and decryption
+     */
     private val IPinv = intArrayOf(
         40, 8, 48, 16, 56, 24, 64, 32,
         39, 7, 47, 15, 55, 23, 63, 31,
@@ -41,6 +68,9 @@ class DES(private val key: UByteArray, private val mode: String) {
         33, 1, 41, 9, 49, 17, 57, 25
     )
 
+    /**
+     * [E] is used to expand the part of the msg to the correct length when given to the Feistel function
+     */
     private val E = intArrayOf(
         32, 1, 2, 3, 4, 5,
         4, 5, 6, 7, 8, 9,
@@ -52,6 +82,9 @@ class DES(private val key: UByteArray, private val mode: String) {
         28, 29, 30, 31, 32, 1
     )
 
+    /**
+     * [P] is used as for permutation as the last step of the Feistel function
+     */
     private val P = intArrayOf(
         16,  7, 20, 21,
         29, 12, 28, 17,
@@ -63,6 +96,9 @@ class DES(private val key: UByteArray, private val mode: String) {
         22, 11,  4, 25
     )
 
+    /**
+     * The [sBoxes] are substitution boxes designed to transform the data
+     */
     private val sBoxes = arrayOf(
         intArrayOf(
             14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
@@ -106,6 +142,9 @@ class DES(private val key: UByteArray, private val mode: String) {
             7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8,
             2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11))
 
+    /**
+     * [PC1] is used during the generation of the [subKeys]
+     */
     private val PC1 = intArrayOf(
         57, 49, 41, 33, 25, 17,  9,
         1, 58, 50, 42, 34, 26, 18,
@@ -117,6 +156,9 @@ class DES(private val key: UByteArray, private val mode: String) {
         21, 13,  5, 28, 20, 12,  4
     )
 
+    /**
+     * [PC2] is used during the generation of the [subKeys]
+     */
     private val PC2 = intArrayOf(
         14, 17, 11, 24,  1,  5,
         3, 28, 15,  6, 21, 10,
@@ -128,6 +170,9 @@ class DES(private val key: UByteArray, private val mode: String) {
         46, 42, 50, 36, 29, 32
     )
 
+    /**
+     * The [shifts] array holds the number of shifts needed during the generation of the subkeys
+     */
     private val shifts = intArrayOf(
         1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
     )
@@ -138,6 +183,15 @@ class DES(private val key: UByteArray, private val mode: String) {
         subKeys = generateSubKeys()
     }
 
+    /**
+     * This function generates the subkeys based on the [key]
+     *
+     * First the key is shortened and permuted to 56 bits with the help of [PC1].
+     * Then based on the index of the given subkey the two half of this key is rotated mod 2^28 with step given by [shifts].
+     * Lastly the two halves are concatenated and permuted with the help of [PC2]]
+     *
+     * @return The subkeys as a list of string containing the bits(each string is 48 bits long)
+     */
     internal fun generateSubKeys(): List<String> {
         val res = MutableList<String>(16) { index ->
             val selectedBits = permutation(key.toBinaryStringRep(), PC1)
@@ -153,6 +207,16 @@ class DES(private val key: UByteArray, private val mode: String) {
         return res
     }
 
+    /**
+     * Rotation mod 2^28 with a given amout of steps
+     *
+     * The number is represented as a string of 1-s and 0-s. First we convert it back to a 32-bit integer, then
+     * apply shifting (which is between 1 or 2 steps) and mask the bits which should go at the back of the number.
+     *
+     * @param s The string containing the 28 bit long number
+     * @param i The amount of rotating steps
+     * @return The rotated number as a string of 1-s and 0-s
+     */
     fun rotateLeftWithGiven(s: String, i: Int): String {
         var sInt = s.toUInt(2)
         sInt = sInt.rotateLeft(i)
@@ -164,7 +228,23 @@ class DES(private val key: UByteArray, private val mode: String) {
         return sInt.toString(2).padStart(28, '0').takeLast(28)
     }
 
-    fun encryptBlock(msg: UByteArray, encrypt: Boolean = true): UByteArray {
+    /**
+     * Encrypting a block
+     *
+     * This is the main method of DES. First we check whether the given block is long enough.
+     * Then we use a permutation given by [IP] and split the block into the 32 bit parts.
+     * The main round of the encryption is the following:
+     * 1. The right part is given to the Feistel function with the index of the current round
+     * 2. The output of the Feistel functin is XOR-ed to the left part
+     * 3. The right and left parts are swaped
+     *
+     * The main round is repeated 16 times.
+     * Lastly the left and the right parts are concatenated and permuted with [IPinv]
+     *
+     * @param msg The block to be encrypted
+     * @return The encrypted block
+     */
+    override fun encryptBlock(msg: UByteArray): UByteArray {
         require(msg.size == 8) {"Size of the message block must be 8 bytes (64 bit)"}
 
         var msgString = msg.toBinaryStringRep()
@@ -175,11 +255,7 @@ class DES(private val key: UByteArray, private val mode: String) {
 
         for (i in 0 until 16) {
             val temp = right
-            right = if (encrypt) {
-                feistelFunction(right, i)
-            } else {
-                feistelFunction(right, 15-i)
-            }
+            right = feistelFunction(right, i)
             right = (left.toUInt(2) xor right.toUInt(2)).toString(2).padStart(32, '0')
             left = temp
         }
@@ -190,10 +266,37 @@ class DES(private val key: UByteArray, private val mode: String) {
         return result.toUByteArray()
     }
 
-    fun decryptBlock(c: UByteArray): UByteArray {
-        return encryptBlock(c, false)
+    /**
+     * Decrypting a block
+     *
+     * The decryption in DES is similar to the encryption. The only differences is that the subkeys are used in
+     * a reversed order. Therefore before calling [encryptBlock] we reverse the subkeys. After the method call we
+     * have to reorder the subkeys in the correct way.
+     *
+     * @param c The encrypted block
+     * @return The decrypted block
+     */
+    override fun decryptBlock(c: UByteArray): UByteArray {
+        subKeys = subKeys.reversed()
+        val res = encryptBlock(c)
+        subKeys = subKeys.reversed()
+        return res
+
     }
 
+    /**
+     * The Feistel of F function
+     *
+     * The Feistel function first extends the 32 bit long right half of the msg to 48 bits with [E],
+     * because the subkeys are 48 bits long. Then the extended right half is XOR-ed with the subkey given by [i].
+     * The output of the operation is broken up into 6 bit long parts and these 6 bit long parts are used the
+     * address the 8 S-Boxes given in [sBoxes]. These numbers are returned by calling [getOutputFromGivenSBox].
+     * The numbers are collected and (each is 4 bit long, so the total is 32 bit), concatenated and permuted with [P].
+     *
+     * @param right The right half of the block
+     * @param i The index of the currect round
+     * @return The output of the F function
+     */
     fun feistelFunction(right: String, i: Int): String {
         val extendedRight = extended(right)
         val subKey = subKeys[i]
@@ -207,16 +310,44 @@ class DES(private val key: UByteArray, private val mode: String) {
         return permutation(sb.toString(), P)
     }
 
-    internal fun getOutputFromGivenSBox(s: String, index: Int): Any {
+    /**
+     * Get a specific value from an S-box
+     *
+     * The 6 bit long String of 1-s and 0-s is interpreted int the following way:
+     * - The row index is the first char and the last concatenated.
+     * - The middle 4 chars are the column index.
+     *
+     * @param s The string containing the row and a column index
+     * @param index The index of the S-box to be used
+     * @return The number as a binary string given by column and row in the given S-box
+     */
+    internal fun getOutputFromGivenSBox(s: String, index: Int): String {
         val row = (s.first().toString() + s.last().toString()).toInt(2)
         val column = s.substring(1, s.length-1).toInt(2)
         return sBoxes[index][row * 16 + column].toString(2).padStart(4, '0')
     }
 
+    /**
+     * Extends a 32 bit long String to be 48 bit long
+     *
+     * The extension is a permutation with the help of [E]
+     *
+     * @param right The 32 bit long String to be extended
+     * @return The extended string
+     */
     internal fun extended(right: String): String {
         return permutation(right, E)
     }
 
+    /**
+     * Creates a permutation from a string with a given permutation
+     *
+     * The array holds the new order of indexes.
+     *
+     * @param msgString The string input
+     * @param p The array holding the order of the index in the permutation
+     * @return The string created by the permutation given by [p]
+     */
     fun permutation(msgString: String, p: IntArray): String {
         val charSeq = CharArray(p.size)
         for (i in p.indices) {
@@ -225,9 +356,21 @@ class DES(private val key: UByteArray, private val mode: String) {
         return charSeq.concatToString()
     }
 
-    fun encrypt(msg: UByteArray): UByteArray {
-        var paddedMsg = msg
-        paddedMsg = pad(msg.toMutableList())
+    /**
+     * Encrypts a msg
+     *
+     * The length of [msg] has to be a multiple of the block size, therefore the msg has to be padded.
+     * If the msg is multiple of the block size then it is padded anyway with a whole block to avoid confusion on
+     * the decryption side.
+     *
+     * The method of encrypting each block depends on the mode of operation given in [mode]. The detailed description
+     * of these modes can be found here: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
+     *
+     * @param msg The msg to be encrypted as a [UByteArray]
+     * @return The encrypted msg
+     */
+    override fun encrypt(msg: UByteArray): UByteArray {
+        var paddedMsg: UByteArray = pad(msg.toMutableList())
         if (mode == "ECB") {
             return paddedMsg.toList().chunked(8).map {
                 encryptBlock(it.toUByteArray())
@@ -246,6 +389,12 @@ class DES(private val key: UByteArray, private val mode: String) {
         throw IllegalStateException("Mode is incorrect")
     }
 
+    /**
+     * Padding the msg to a multiple of the block size based on ISO-7816
+     *
+     * @param msg The msg to be padded
+     * @return The padded msg
+     */
     internal fun pad(msg: MutableList<UByte>): UByteArray {
         // Adding 0x80 as the first byte of the padding
         msg.add(0x80u)
@@ -256,6 +405,12 @@ class DES(private val key: UByteArray, private val mode: String) {
         return msg.toUByteArray()
     }
 
+    /**
+     * Remove the padding from the msg. The padding is believed to be ISO-7816
+     *
+     * @param msg The padded msg
+     * @return The msg with padding removed
+     */
     internal fun removePadding(msg: MutableList<UByte>): UByteArray {
         // Removing the 0 bytes from the end of the list
         while (msg.last() == 0u.toUByte()) {
@@ -270,7 +425,18 @@ class DES(private val key: UByteArray, private val mode: String) {
         return msg.toUByteArray()
     }
 
-    fun decrypt(c: UByteArray): UByteArray {
+    /**
+     * Decrypting a msg
+     *
+     * The method of decrypting each block depends on the mode of operation given in [mode]. The detailed description
+     * of these modes can be found here: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
+     *
+     * The padding has to be removed from the decrypted msg at the end.
+     *
+     * @param c The encrypted msg
+     * @return The decrypted msg
+     */
+    override fun decrypt(c: UByteArray): UByteArray {
         if (mode == "ECB") {
             val plaintext = c.toList().chunked(8).map {
                 decryptBlock(it.toUByteArray())

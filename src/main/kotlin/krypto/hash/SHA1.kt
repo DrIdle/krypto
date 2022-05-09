@@ -4,14 +4,14 @@ import krypto.utils.toUByteArray
 import krypto.utils.toUInt
 
 @OptIn(ExperimentalUnsignedTypes::class)
-open class SHA1: AbstractHash() {
+open class SHA1: HashInterface {
 
     // Constants used by SHA1
-    private var H0: UInt = 0x67452301u
-    private var H1: UInt = 0xEFCDAB89u
-    private var H2: UInt = 0x98BADCFEu
-    private var H3: UInt = 0x10325476u
-    private var H4: UInt = 0xC3D2E1F0u
+    private var h0: UInt = 0x67452301u
+    private var h1: UInt = 0xEFCDAB89u
+    private var h2: UInt = 0x98BADCFEu
+    private var h3: UInt = 0x10325476u
+    private var h4: UInt = 0xC3D2E1F0u
 
     open fun k(t: Int): UInt {
         return when(t) {
@@ -69,7 +69,7 @@ open class SHA1: AbstractHash() {
         }.flatten().toUByteArray()
     }
 
-    override fun getInstance(): AbstractHash {
+    override fun getInstance(): HashInterface {
         return SHA1()
     }
 
@@ -96,11 +96,11 @@ open class SHA1: AbstractHash() {
                         1
                     )
             }
-            var a = H0
-            var b = H1
-            var c = H2
-            var d = H3
-            var e = H4
+            var a = h0
+            var b = h1
+            var c = h2
+            var d = h3
+            var e = h4
 
             for (i in 0..79) {
                 val f: UInt = f(b, c, d, i)
@@ -113,12 +113,12 @@ open class SHA1: AbstractHash() {
                 a = temp
             }
 
-            H0 += a
-            H1 += b
-            H2 += c
-            H3 += d
-            H4 += e
+            h0 += a
+            h1 += b
+            h2 += c
+            h3 += d
+            h4 += e
         }
-        return uintArrayOf(H0, H1, H2, H3, H4)
+        return uintArrayOf(h0, h1, h2, h3, h4)
     }
 }

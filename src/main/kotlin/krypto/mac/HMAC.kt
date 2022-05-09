@@ -1,13 +1,11 @@
 package krypto.mac
 
-import krypto.hash.AbstractHash
-import krypto.hash.MD5
-import java.security.MessageDigest
+import krypto.hash.HashInterface
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class HMAC<T: AbstractHash>(private val key: UByteArray, private val digest: T) {
+class HMAC<T: HashInterface>(private val key: UByteArray, private val digest: T): MACInterface {
 
-    fun generate(msg: UByteArray): UByteArray {
+    override fun generate(msg: UByteArray): UByteArray {
         val opad = UByteArray(digest.blockSize()) { _ -> 0x5cu}
         val ipad = UByteArray(digest.blockSize()) { _ -> 0x36u}
 
