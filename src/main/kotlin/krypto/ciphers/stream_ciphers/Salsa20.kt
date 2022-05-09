@@ -5,6 +5,20 @@ import krypto.utils.revLittleEndian
 import krypto.utils.toUByteArray
 import kotlin.random.Random
 
+/**
+ * This class implements the Salsa20 stream cipher
+ *
+ * The Salsa20 stream cipher was created by Bernstein and the detailed publication (which this class is based on)
+ * can be found on the author web page: https://cr.yp.to/snuffle/spec.pdf
+ *
+ * The internal state of the cipher can be represented by a 4x4 matrix holding 32-bit long numbers. A state can used as
+ * an array of 16, 32-bit long integers.
+ *
+ * @property key The key to be used in the initial state
+ * @property nonce The nonce to be used in the initial state
+ * @property sigma The byte representation of the string "expand 32-byte k" in ASCII coding used for 32 byte long keys
+ * @property tau The byte representation of the string "expand 16-byte k" in ASCII coding used for 16 byte long keys
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
 
@@ -28,6 +42,15 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         }
     }
 
+    /**
+     * The main point of the cipher
+     *
+     * The quarter round is the main method of the Salsa20 cipher. It is used to modify the internal state of
+     * the keystream generation.
+     *
+     * @param y The array containing values from the internal state
+     * @return The new values
+     */
     fun quarterRound(y: UIntArray): UIntArray {
         val z = UIntArray(4)
         z[1] = y[1] xor (y[0] + y[3]).rotateLeft(7)
@@ -38,6 +61,12 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         return z
     }
 
+    /**
+     * Calling the quarter round on the rows of the internal state
+     *
+     * @param y The internal state
+     * @return The new internal state after the row round
+     */
     fun rowRound(y: UIntArray): UIntArray {
         val z = UIntArray(16)
 
@@ -69,6 +98,12 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         return z
     }
 
+    /**
+     * Calling the quarted round on the columns of the internal state
+     *
+     * @param x The internal state
+     * @return The new internal state
+     */
     fun columnRound(x: UIntArray): UIntArray {
         val y = UIntArray(16)
 
@@ -100,10 +135,26 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         return y
     }
 
+    /**
+     * The double round which consists of calling the column, then the row round.
+     *
+     * @param x The internal state
+     * @return The new internal state
+     */
     fun doubleRound(x: UIntArray): UIntArray {
         return rowRound(columnRound(x))
     }
 
+    /**
+     * This function generates 64-byte long blocks if the keystream.
+     *
+     *
+     * The [doubleRound] is called 10 times starting from the initial state.
+     * The last step is to add the initial state and the result of the 10 [doubleRound] together.
+     *
+     * @param x The initial state
+     * @return A 64-byte long block of the keystream.
+     */
     fun salsa20Hash(x: UByteArray): UByteArray {
         var xAsWords = UIntArray(16)
 
@@ -127,6 +178,23 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         return res
     }
 
+    /**
+     * Creating the initial state based on the length of the key
+     *
+     * The initial state is created as follows (for a 32-byte long key):
+     * "expa" 	Key 	Key 	Key
+     *  Key 	"nd 3" 	Nonce 	Nonce
+     *  Pos. 	Pos. 	"2-by" 	Key
+     *  Key 	Key 	Key 	"te k"
+     *
+     * For a 16-byte long key the [tau] is used instead of [sigma] and key is used twice.
+     *
+     * The [salsa20Hash] is called with the initial state to generated a block of the keystream.
+     *
+     * @param k The key to be used
+     * @param n The nonce
+     * @return The keystream block
+     */
     fun salsa20Expansion(k: UByteArray, n: UByteArray): UByteArray {
         if (k.size == 32) {
             return salsa20Hash(sigma[0] + k.copyOfRange(0,16) + sigma[1] + n + sigma[2] + k.copyOfRange(16,32)+ sigma[3])
@@ -137,6 +205,16 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         return ubyteArrayOf()
     }
 
+    /**
+     * Encryption or decryption of a msg.
+     *
+     * The keystream can only be generated in 64-byte long blocks. The keystream and the message is XOR-ed together.
+     * Therefore, the encryption and decryption is the same.
+     *
+     * @param m The msg to be encrypted
+     * @param counter The count to be used
+     * @return The encrypted or decrypted msg
+     */
     fun encodeDecode(m: UByteArray, counter: ULong = 0u): UByteArray {
         nonce = nonce ?: 0u
         val numberOfRounds = m.size / 64
@@ -146,6 +224,7 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         var keyStream: UByteArray = ubyteArrayOf()
 
         for (i in m.indices) {
+            // If we used 64 byte of the msg the counter must be incremented and a new keystream block must be generated.
             if (i % 64 == 0) {
                 keyStream = salsa20Expansion(key, nonce!!.toUByteArray()+runningCounter.toUByteArray().reversedArray())
                 runningCounter += 1u
