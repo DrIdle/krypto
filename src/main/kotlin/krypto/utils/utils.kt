@@ -3,6 +3,13 @@ package krypto.utils
 import java.nio.charset.Charset
 import kotlin.experimental.xor
 
+/**
+ * A function to XOR two string using a charset
+ *
+ * @param key The other string in the XOR operation
+ * @param charset The charset to be used during the conversion to bytes
+ * @return The result of the XOR operation
+ */
 fun String.strxor(key:String, charset: Charset): String {
     if (key.length != this.length) {
         throw IllegalArgumentException("The key must be of the same length as the string")
@@ -19,6 +26,14 @@ fun String.strxor(key:String, charset: Charset): String {
     return resultByteArray.toString(charset = charset)
 }
 
+/**
+ * Convert a string of 1s and 0s to a [UByteArray]
+ *
+ * The length of the string must be a multiple of 8, so we can treat them as bytes.
+ * We split the string into parts with length 8 and make a byte out of the 1s and 0s.
+ *
+ * @return The [UByteArray] from the string
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun String.toUByteArray(): UByteArray {
     if (this.length % 8 != 0) {
@@ -29,16 +44,35 @@ fun String.toUByteArray(): UByteArray {
     }.toUByteArray()
 }
 
+/**
+ * Converts a [UInt] into a [UByteArray]
+ *
+ * We split the [UInt] into bytes with shifting and concatenate them to from a [UByteArray]
+ *
+ * @return The [UByteArray] we got from the [UInt]
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UInt.toUByteArray(): UByteArray {
     return ubyteArrayOf(shr(24).toUByte(), shr(16).toUByte(), shr(8).toUByte(),this.toUByte())
 }
 
+/**
+ * Converts a [ULong] into a [UByteArray]
+ *
+ * We split the [ULong] into bytes with shifting and concatenate them to from a [UByteArray]
+ *
+ * @return The [UByteArray] we got from the [ULong]
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun ULong.toUByteArray(): UByteArray {
     return  ubyteArrayOf(shr(56).toUByte(), shr(48).toUByte(), shr(40).toUByte(), shr(32).toUByte(), shr(24).toUByte(), shr(16).toUByte(), shr(8).toUByte(), this.toUByte())
 }
 
+/**
+ * Convert a [UByteArray] holding 4 bytes to a [UInt] in little endian representation.
+ *
+ * @return The [UInt] we got from the [UByteArray] in little endian
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UByteArray.littleEndian(): UInt {
     if (this.size != 4) {
@@ -48,6 +82,11 @@ fun UByteArray.littleEndian(): UInt {
 
 }
 
+/**
+ * Make a string of 1s and 0s from a [UByteArray]
+ *
+ * @return A binary string representing the [UByteArray]
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UByteArray.toBinaryStringRep(): String {
     val sb = StringBuilder()
@@ -57,6 +96,11 @@ fun UByteArray.toBinaryStringRep(): String {
     return sb.toString()
 }
 
+/**
+ * Make a string of the hexadecimal representation of the [UByteArray]
+ *
+ * @return The hexadecimal string we got from the [UByteArray]
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UByteArray.hexdigest(): String {
     val sb = StringBuilder()
@@ -66,11 +110,21 @@ fun UByteArray.hexdigest(): String {
     return sb.toString()
 }
 
+/**
+ * Convert a [UInt] in little endian to a [UByteArray] in big endian
+ *
+ * @return The [UByteArray] representing the [UInt] in big endian
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UInt.revLittleEndian(): UByteArray {
     return ubyteArrayOf(this.toUByte(), (this shr 8).toUByte(), (this shr 16).toUByte(), (this shr 24).toUByte())
 }
 
+/**
+ * Convert a [UByteArray] with size less or equal to 4 to a [UInt]
+ *
+ * @return The [UInt] from the [UByteArray]
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UByteArray.toUInt(): UInt {
     val newArray: UByteArray
@@ -87,6 +141,11 @@ fun UByteArray.toUInt(): UInt {
     return result
 }
 
+/**
+ * Convert a [UByteArray] with size less or equal to 8 to a [ULong]
+ *
+ * @return The [ULong] from the [UByteArray]
+ */
 @OptIn(ExperimentalUnsignedTypes::class)
 fun UByteArray.toULong(): ULong {
     val newArray: UByteArray
