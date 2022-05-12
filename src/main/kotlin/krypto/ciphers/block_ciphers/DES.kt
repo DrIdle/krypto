@@ -3,6 +3,7 @@ package krypto.ciphers.block_ciphers
 import krypto.utils.toBinaryStringRep
 import krypto.utils.toUByteArray
 import krypto.utils.toULong
+import krypto.utils.xor
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.random.nextULong
@@ -372,15 +373,15 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
     override fun encrypt(msg: UByteArray): UByteArray {
         val paddedMsg: UByteArray = pad(msg.toMutableList())
         if (mode == "ECB") {
-            return paddedMsg.toList().chunked(8).map {
+            return paddedMsg.toList().chunked(8).flatMap {
                 encryptBlock(it.toUByteArray())
-            }.flatten().toUByteArray()
+            }.toUByteArray()
         }
         if (mode == "CBC") {
             val blocks = paddedMsg.toList().chunked(8).toMutableList()
             val c : MutableList<List<UByte>> = mutableListOf(iv.toList())
             blocks.forEachIndexed { index, uBytes ->
-                val encryptInputBlock = (c[index].toUByteArray().toULong() xor uBytes.toUByteArray().toULong()).toUByteArray()
+                val encryptInputBlock = c[index].toUByteArray() xor uBytes.toUByteArray()
                 val encryptedBlock = encryptBlock(encryptInputBlock)
                 c.add(encryptedBlock.toList())
             }
@@ -438,9 +439,9 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      */
     override fun decrypt(c: UByteArray): UByteArray {
         if (mode == "ECB") {
-            val plaintext = c.toList().chunked(8).map {
+            val plaintext = c.toList().chunked(8).flatMap {
                 decryptBlock(it.toUByteArray())
-            }.flatten().toMutableList()
+            }.toMutableList()
             return removePadding(plaintext)
         }
         if (mode == "CBC") {
@@ -450,7 +451,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
             val msg = mutableListOf(iv.toList())
             blocks.forEachIndexed { index, uBytes ->
                 val interBlock = decryptBlock(uBytes.toUByteArray())
-                val decryptedInputBlock = (blocksToXor[index].toUByteArray().toULong() xor interBlock.toUByteArray().toULong()).toUByteArray()
+                val decryptedInputBlock = blocksToXor[index].toUByteArray() xor interBlock.toUByteArray()
                 msg.add(decryptedInputBlock.toList())
             }
             return removePadding(msg.slice(1 .. blocks.size).flatten().toMutableList())

@@ -161,3 +161,18 @@ fun UByteArray.toULong(): ULong {
     }
     return result
 }
+
+/**
+ * Infix function to make elementwise XOR-ing to same sized [UByteArray]s easier.
+ *
+ * @param other The [UByteArray] to which should be XOR to this elementwise
+ * @return The [UByteArray] containing the result of the elementwise XOR
+ */
+@OptIn(ExperimentalUnsignedTypes::class)
+infix fun UByteArray.xor(other: UByteArray): UByteArray {
+    require(this.size == other.size) {"The arrays must be the same length"}
+
+    return this.zip(other) { thisByte, otherByte ->
+        thisByte xor otherByte
+    }.toUByteArray()
+}

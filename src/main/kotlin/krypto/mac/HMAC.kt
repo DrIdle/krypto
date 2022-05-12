@@ -1,6 +1,7 @@
 package krypto.mac
 
 import krypto.hash.HashInterface
+import krypto.utils.xor
 
 /**
  * This class implements the HMAC algorithm
@@ -44,13 +45,9 @@ class HMAC<T: HashInterface>(private val key: UByteArray, private val digest: T)
         require(kPrime.size == digest.blockSize()) {"K' must be the same size as the " +
                 "block size of the used digest method"}
 
-        val firstPart = kPrime.zip(opad) { keyByte, constantByte ->
-            keyByte xor constantByte
-        }.toUByteArray()
+        val firstPart = kPrime xor opad
 
-        var secondPart = kPrime.zip(ipad) { keyByte, constantByte ->
-            keyByte xor constantByte
-        }.toUByteArray()
+        var secondPart = kPrime xor ipad
 
         secondPart = digest.getInstance().hash(secondPart + msg)
 

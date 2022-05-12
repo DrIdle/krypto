@@ -3,6 +3,7 @@ import krypto.hash.MD5
 import krypto.hash.SHA1
 import krypto.mac.HMAC
 import krypto.utils.hexdigest
+import krypto.utils.xor
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun main() {
@@ -71,4 +72,14 @@ fun main() {
     println(digest.hexdigest())
 
      */
+
+
+    val array1 = ubyteArrayOf(0u, 0u, 0u, 0u)
+    val array2 = ubyteArrayOf(1u, 1u, 1u, 1u)
+
+    val res = array1 xor array2
+
+    res.forEach {
+        print(it.toString(2).padStart(8,'0')+ " ")
+    }
 }

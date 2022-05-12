@@ -1,5 +1,7 @@
 package krypto.ciphers.stream_ciphers
 
+import krypto.utils.xor
+
 /**
  * Class implementing the One-Time-Pad stream cipher
  */
@@ -21,9 +23,6 @@ class OneTimePad {
         if (informationByteArray.size != keyByteArray.size) {
             throw IllegalArgumentException("THe key must be as long as the information to be encoded")
         }
-        return informationByteArray.zip(keyByteArray) {
-            informationElement, keyElement ->
-                informationElement xor keyElement
-        }.toUByteArray()
+        return informationByteArray xor keyByteArray
     }
 }

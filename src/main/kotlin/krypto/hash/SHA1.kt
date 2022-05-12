@@ -105,9 +105,9 @@ open class SHA1: HashInterface {
         val hashValue = digestGeneration(msgCopy)
 
 
-        return hashValue.map { uIntElement ->
+        return hashValue.flatMap { uIntElement ->
             uIntElement.toUByteArray()
-        }.flatten().toUByteArray()
+        }.toUByteArray()
     }
 
     /**

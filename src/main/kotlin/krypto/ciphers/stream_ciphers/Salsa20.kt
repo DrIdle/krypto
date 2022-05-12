@@ -170,9 +170,9 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         val res = xAsWords.zip(xAsWordsOriginal) {
             xWord, zWord ->
             xWord + zWord
-        }.toUIntArray().map {
+        }.toUIntArray().flatMap {
             it.revLittleEndian()
-        }.flatten().toUByteArray()
+        }.toUByteArray()
 
         return res
     }
