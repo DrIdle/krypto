@@ -47,7 +47,7 @@ fun String.toUByteArray(): UByteArray {
 /**
  * Converts a [UInt] into a [UByteArray]
  *
- * We split the [UInt] into bytes with shifting and concatenate them to from a [UByteArray]
+ * We split the [UInt] into bytes with shifting and concatenate them to form a [UByteArray]
  *
  * @return The [UByteArray] we got from the [UInt]
  */
@@ -59,7 +59,7 @@ fun UInt.toUByteArray(): UByteArray {
 /**
  * Converts a [ULong] into a [UByteArray]
  *
- * We split the [ULong] into bytes with shifting and concatenate them to from a [UByteArray]
+ * We split the [ULong] into bytes with shifting and concatenate them to form a [UByteArray]
  *
  * @return The [UByteArray] we got from the [ULong]
  */

@@ -8,11 +8,20 @@ import krypto.utils.toUInt
  *
  * The MD5 algorithm was published in RFC-1321 (https://www.rfc-editor.org/rfc/rfc1321.html)
  * Although the algorithm is considered unsafe, it's still widely used as a message digest algorithm.
+ *
+ * @property a0 Constant used by MD5
+ * @property b0 Constant used by MD5
+ * @property c0 Constant used by MD5
+ * @property d0 Constant used by MD5
+ * @property s The amount of rotation steps to be used during the main loop
+ * @property k The precomputed values of k to be used during the main loop
  */
 @OptIn(ExperimentalUnsignedTypes::class)
 class MD5: SHA1() {
 
-    // Constants used by MD5
+    /**
+     * Constants used by MD5
+     */
     private var a0: UInt = 0x67452301u
     private var b0: UInt = 0xefcdab89u
     private var c0: UInt = 0x98badcfeu
@@ -68,7 +77,7 @@ class MD5: SHA1() {
     }
 
     /**
-     * Calculates the output of the f function based on the value of [b], [c], [d] and on given iteration number
+     * Calculates the output of the f function based on the value of [b], [c], [d] and the given iteration number
      *
      * @param b The value of b
      * @param c The value of c
@@ -88,7 +97,7 @@ class MD5: SHA1() {
     }
 
     /**
-     * This function gives back the value of k based on given iteration number
+     * This function gives back the value of k based on the given iteration number
      *
      * @param i The current iteration number in the main loop
      * @return The value for this iteration
@@ -112,17 +121,14 @@ class MD5: SHA1() {
      * @param msgCopy The copy of the msg as a [MutableList]
      */
     override fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
-        val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()
-        val originalLengthRight = (((originalLength * 8u) shl 32) shr 32).toUInt().toUByteArray()
-
-        val wholeNumber = originalLengthRight + originalLengthLeft
-        msgCopy.addAll(wholeNumber)
+        val originalLengthInBytes = (originalLength * 8u).toUByteArray()
+        msgCopy.addAll(originalLengthInBytes.copyOfRange(4, 8) + originalLengthInBytes.copyOfRange(0, 4) )
     }
 
     /**
      * This function generates the digest of the msg
      *
-     * First the msg is sliced into parts of 512 bit. For each of these groups, we create 16 32-bit long integers.
+     * First the msg is sliced into parts of 512 bit length. For each of these groups, we create 16 32-bit long integers.
      * (These integers have to be in little endian format).
      * Then we initialize the variables a, b, c, d with [a0], [b0], [c0] and [d0]. After this we run a
      * for loop for 80 iteration and update these variables. After the last iteration we add the values of a, b, c, d
@@ -182,6 +188,9 @@ class MD5: SHA1() {
         return res
     }
 
+    /**
+     * Gives back and instance of the class
+     */
     override fun getInstance(): HashInterface {
         return MD5()
     }

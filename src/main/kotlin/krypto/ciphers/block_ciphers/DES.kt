@@ -16,7 +16,19 @@ import kotlin.random.nextULong
  * The standard can be found here: [https://csrc.nist.gov/CSRC/media/Publications/fips/46/3/archive/1999-10-25/documents/fips46-3.pdf]
  *
  * @property key The key for the cipher (must be 8 bytes long)
+ * @property subKeys The list containing the subkeys generated from the [key]
+ * @property modes The list of accepted modes at the moment
  * @property mode The mode of operation as string (with uppercase letters)
+ * @property iv The initialization vector. It's not used in all modes.
+ * @property IP IP is used as the initial permutation during encryption and decryption
+ * @property IPinv IPinv is used as the final permutation during encryption and decryption
+ * @property E E is used to expand the part of the msg to the correct length when given to the Feistel function
+ * @property P P is used as for permutation as the last step of the Feistel function
+ * @property sBoxes The [sBoxes] are substitution boxes designed to transform the data
+ * @property PC1 PC1 is used during the generation of the [subKeys]
+ * @property PC2 PC2 is used during the generation of the [subKeys]
+ * @property shifts The shifts array holds the number of shifts needed during the generation of the [subKeys]
+ *
  * @constructor Creates a DES instance
  */
 @OptIn(ExperimentalUnsignedTypes::class)
@@ -185,10 +197,10 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
     }
 
     /**
-     * This function generates the subkeys based on the [key]
+     * This function generates the [subKeys] based on the [key]
      *
      * First the key is shortened and permuted to 56 bits with the help of [PC1].
-     * Then based on the index of the given subkey the two half of this key is rotated mod 2^28 with step given by [shifts].
+     * Then based on the index of the given subkey the two half of this key is rotated mod 2^28 with the step given by [shifts].
      * Lastly the two halves are concatenated and permuted with the help of [PC2]]
      *
      * @return The subkeys as a list of string containing the bits(each string is 48 bits long)
@@ -209,7 +221,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
     }
 
     /**
-     * Rotation mod 2^28 with a given amout of steps
+     * Rotation mod 2^28 with a given amount of steps
      *
      * The number is represented as a string of 1-s and 0-s. First we convert it back to a 32-bit integer, then
      * apply shifting (which is between 1 or 2 steps) and mask the bits which should go at the back of the number.
@@ -233,11 +245,11 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * Encrypting a block
      *
      * This is the main method of DES. First we check whether the given block is long enough.
-     * Then we use a permutation given by [IP] and split the block into the 32 bit parts.
+     * Then we use a permutation given by [IP] and split the block into two 32 bit long parts.
      * The main round of the encryption is the following:
      * 1. The right part is given to the Feistel function with the index of the current round
      * 2. The output of the Feistel functin is XOR-ed to the left part
-     * 3. The right and left parts are swaped
+     * 3. The right and left parts are swapped
      *
      * The main round is repeated 16 times.
      * Lastly the left and the right parts are concatenated and permuted with [IPinv]
@@ -270,9 +282,9 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
     /**
      * Decrypting a block
      *
-     * The decryption in DES is similar to the encryption. The only differences is that the subkeys are used in
-     * a reversed order. Therefore, before calling [encryptBlock] we reverse the subkeys. After the method call we
-     * have to reorder the subkeys in the correct way.
+     * The decryption in DES is similar to the encryption. The only difference is that the [subKeys] are used in
+     * a reversed order. Therefore, before calling [encryptBlock] we reverse the [subKeys]. After the method call we
+     * have to reorder the [subKeys] in the correct way.
      *
      * @param c The encrypted block
      * @return The decrypted block
@@ -286,16 +298,16 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
     }
 
     /**
-     * The Feistel of F function
+     * The Feistel function
      *
      * The Feistel function first extends the 32 bit long right half of the msg to 48 bits with [E],
      * because the subkeys are 48 bits long. Then the extended right half is XOR-ed with the subkey given by [i].
      * The output of the operation is broken up into 6 bit long parts and these 6 bit long parts are used the
      * address the 8 S-Boxes given in [sBoxes]. These numbers are returned by calling [getOutputFromGivenSBox].
-     * The numbers are collected and (each is 4 bit long, so the total is 32 bit), concatenated and permuted with [P].
+     * The numbers are collected (each is 4 bit long, so the total is 32 bit), concatenated and permuted with [P].
      *
      * @param right The right half of the block
-     * @param i The index of the currect round
+     * @param i The index of the current round
      * @return The output of the F function
      */
     fun feistelFunction(right: String, i: Int): String {
@@ -343,7 +355,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
     /**
      * Creates a permutation from a string with a given permutation
      *
-     * The array holds the new order of indexes.
+     * The array given as the second parameter holds the new order of indexes.
      *
      * @param msgString The string input
      * @param p The array holding the order of the index in the permutation

@@ -11,7 +11,7 @@ class OneTimePad {
     /**
      * Encrypting and decrypting a given msg with a key
      *
-     * The One-Time-Pad stream cipher is very basic: the msg is XOR with key. Therefore, the encryption and decryption
+     * The One-Time pad stream cipher is very basic: the msg is XOR-ed with key. Therefore, the encryption and decryption
      * is the same. The only thing we have to check is whether [informationByteArray]
      * and [keyByteArray] are of the same size.
      *

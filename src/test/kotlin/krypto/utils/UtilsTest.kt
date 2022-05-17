@@ -162,4 +162,16 @@ class UtilsTest {
 
         Assertions.assertEquals(correctOutput, output)
     }
+
+    @Test
+    fun `The xor for two UBytaArrays should give back the correct value`() {
+        val testArray1 = ubyteArrayOf(0u, 1u, 0u, 1u)
+        val testArray2 = ubyteArrayOf(0u, 1u, 1u, 0u)
+
+        val output = testArray1 xor testArray2
+
+        val correctOutput = ubyteArrayOf(0u, 0u, 1u, 1u)
+
+        Assertions.assertEquals(correctOutput.toList(), output.toList())
+    }
 }

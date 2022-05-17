@@ -8,11 +8,19 @@ import krypto.utils.toUInt
  *
  * The SHA-1 algorithm was published in RFC-3174 (https://www.rfc-editor.org/rfc/rfc3174.html)
  * Although the algorithm is considered unsafe, it's still widely used as a message digest algorithm.
+ *
+ * @property h0 Constant used by SHA1
+ * @property h1 Constant used by SHA1
+ * @property h2 Constant used by SHA1
+ * @property h3 Constant used by SHA1
+ * @property h4 Constant used by SHA1
  */
 @OptIn(ExperimentalUnsignedTypes::class)
 open class SHA1: HashInterface {
 
-    // Constants used by SHA1
+    /**
+     * Constants used by SHA1
+     */
     private var h0: UInt = 0x67452301u
     private var h1: UInt = 0xEFCDAB89u
     private var h2: UInt = 0x98BADCFEu
@@ -20,7 +28,7 @@ open class SHA1: HashInterface {
     private var h4: UInt = 0xC3D2E1F0u
 
     /**
-     * This function gives back the value of k based on given iteration number
+     * This function gives back the value of k based on the given iteration number
      *
      * @param t The current iteration number in the main loop
      * @return The value for this iteration
@@ -56,7 +64,7 @@ open class SHA1: HashInterface {
     }
 
     /**
-     * Calculates the output of the f function based on the value of [b], [c], [d] and on given iteration number
+     * Calculates the output of the f function based on the value of [b], [c], [d] and the given iteration number
      *
      * @param b The value of b
      * @param c The value of c
@@ -124,17 +132,14 @@ open class SHA1: HashInterface {
      * @param msgCopy The copy of the msg as a [MutableList]
      */
     open fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
-        val originalLengthLeft = ((originalLength * 8u) shr 32).toUInt().toUByteArray()
-        val originalLengthRight = (((originalLength * 8u) shl 32) shr 32).toUInt().toUByteArray()
-
-        msgCopy.addAll(originalLengthLeft + originalLengthRight)
+        msgCopy.addAll((originalLength * 8u).toUByteArray())
     }
 
     /**
      * This function generates the digest of the msg
      *
-     * First the msg is sliced into parts of 512 bit. For each of these groups, we create 16 32-bit long integers.
-     * The next is to extend this collection into a new one with length 80.
+     * First the msg is sliced into parts of 512 bit length. For each of these groups, we create 16 32-bit long integers.
+     * The next step is to extend this collection into a new one with length 80.
      * Then we initialize the variables a, b, c, d and e with [h0], [h1], [h2], [h3] and [h4]. After this we run a
      * for loop for 80 iteration and update these variables. After the last iteration we add the values of a, b, c, d
      * and e to [h0], [h1], [h2], [h3], [h4] and do this for the next 512 bit long group.
