@@ -8,15 +8,18 @@ import krypto.ciphers.block_ciphers.DES
  * The CBC-MAC algorithm uses DES to generate the MAC of the message. The inner workings of the algorithm can be found
  * here: https://en.wikipedia.org/wiki/CBC-MAC
  *
- * @property encoder The DES encoder to be used during the generation of the MAC
  */
 @OptIn(ExperimentalUnsignedTypes::class)
 class CBCMAC(key: UByteArray): MACInterface {
 
+    /**
+     * The DES encoder to be used during the generation of the MAC
+     */
     private val encoder = DES(key, "CBC")
 
-    // The iv of the encoder has to be set to all nulls
+
     init {
+        // The iv of the encoder has to be set to all nulls
         encoder.iv = ubyteArrayOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
     }
 

@@ -82,4 +82,8 @@ fun main() {
     res.forEach {
         print(it.toString(2).padStart(8,'0')+ " ")
     }
+
+    println()
+    println(65u / 64u)
+    println(66u % 64u)
 }

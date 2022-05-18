@@ -9,12 +9,6 @@ import krypto.utils.toUInt
  * The MD5 algorithm was published in RFC-1321 (https://www.rfc-editor.org/rfc/rfc1321.html)
  * Although the algorithm is considered unsafe, it's still widely used as a message digest algorithm.
  *
- * @property a0 Constant used by MD5
- * @property b0 Constant used by MD5
- * @property c0 Constant used by MD5
- * @property d0 Constant used by MD5
- * @property s The amount of rotation steps to be used during the main loop
- * @property k The precomputed values of k to be used during the main loop
  */
 @OptIn(ExperimentalUnsignedTypes::class)
 class MD5: SHA1() {

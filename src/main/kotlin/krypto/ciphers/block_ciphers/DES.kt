@@ -362,9 +362,8 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * @return The string created by the permutation given by [p]
      */
     fun permutation(msgString: String, p: IntArray): String {
-        val charSeq = CharArray(p.size)
-        for (i in p.indices) {
-            charSeq[i] = msgString[p[i]-1]
+        val charSeq = CharArray(p.size) { index ->
+            msgString[p[index]-1]
         }
         return charSeq.concatToString()
     }

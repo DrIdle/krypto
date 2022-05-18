@@ -238,6 +238,20 @@ class Salsa20Test {
     }
 
     @Test
+    fun `Decrypting from given position should work`() {
+        val testInput = ubyteArrayOf(0u, 1u, 2u, 3u, 4u, 5u, 6u)
+        val salsaEncoder = Salsa20(salsaTestKey.toByteArray(charset = charset).toUByteArray(), salsaNonce)
+
+        val encodedInput = salsaEncoder.encodeDecode(testInput)
+
+        val output = salsaEncoder.encodeDecode(encodedInput.copyOfRange(2, encodedInput.size), 2u)
+
+        Assertions.assertEquals(testInput.copyOfRange(2, testInput.size).toList(), output.toList())
+
+
+    }
+
+    @Test
     fun `Not equal lengths should throw exception`() {
         assertThrows<IllegalArgumentException>{
             val encoder = Salsa20(wrongLengthKey.toByteArray(charset = charset).toUByteArray(), salsaNonce)

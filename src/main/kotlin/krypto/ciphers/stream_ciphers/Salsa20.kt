@@ -13,14 +13,14 @@ import krypto.utils.toUByteArray
  * The internal state of the cipher can be represented by a 4x4 matrix holding 32-bit long numbers. A state can be used as
  * an array of 16, 32-bit long integers.
  *
- * @property key The key to be used in the initial state
  * @property nonce The nonce to be used in the initial state
- * @property sigma The byte representation of the string "expand 32-byte k" in ASCII coding used for 32 byte long keys
- * @property tau The byte representation of the string "expand 16-byte k" in ASCII coding used for 16 byte long keys
  */
 @OptIn(ExperimentalUnsignedTypes::class)
-class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
+class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
 
+    /**
+     * The byte representation of the string "expand 32-byte k" in ASCII coding used for 32 byte long keys
+     */
     private val sigma = arrayOf(
         ubyteArrayOf(101u, 120u, 112u, 97u),
         ubyteArrayOf(110u, 100u, 32u, 51u),
@@ -28,6 +28,9 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
         ubyteArrayOf(116u, 101u, 32u, 107u)
     )
 
+    /**
+     * The byte representation of the string "expand 16-byte k" in ASCII coding used for 16 byte long keys
+     */
     private val tau = arrayOf(
         ubyteArrayOf(101u, 120u, 112u, 97u),
         ubyteArrayOf(110u, 100u, 32u, 49u),
@@ -208,13 +211,20 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
      * The keystream can only be generated in 64-byte long blocks. The keystream and the message is XOR-ed together.
      * Therefore, the encryption and decryption is the same.
      *
+     * Note that the counter is a ULong, so it can only hold numbers up to 2^64 before overflowing.
+     * This means that with a single key only 2^70 byte can be encrypted (2^64 * 2^6, because a keystream
+     * block is 64 byte long).
+     * It's the caller's responsibility to not go over this limit.
+     *
      * @param m The msg to be encrypted
-     * @param counter The count to be used
+     * @param counter The position of the byte from which we start encoding/decoding (the first element of [m])
      * @return The encrypted or decrypted msg
      */
     fun encodeDecode(m: UByteArray, counter: ULong = 0u): UByteArray {
         nonce = nonce ?: 0u
-        var runningCounter = counter
+        val blockNumber = counter / 64u
+        val byteOffset = (counter % 64u).toInt() // Can only be between 0 and 64
+        var runningCounter = blockNumber
 
         var keyStream: UByteArray = ubyteArrayOf()
 
@@ -224,7 +234,7 @@ class Salsa20 constructor(private var key: UByteArray, var nonce: ULong?) {
                 keyStream = salsa20Expansion(key, nonce!!.toUByteArray()+runningCounter.toUByteArray().reversedArray())
                 runningCounter += 1u
             }
-            m[index] xor keyStream[index % 64]
+            m[index] xor keyStream[(index+byteOffset) % 64]
         }
         return result
     }

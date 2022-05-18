@@ -9,11 +9,6 @@ import krypto.utils.toUInt
  * The SHA-1 algorithm was published in RFC-3174 (https://www.rfc-editor.org/rfc/rfc3174.html)
  * Although the algorithm is considered unsafe, it's still widely used as a message digest algorithm.
  *
- * @property h0 Constant used by SHA1
- * @property h1 Constant used by SHA1
- * @property h2 Constant used by SHA1
- * @property h3 Constant used by SHA1
- * @property h4 Constant used by SHA1
  */
 @OptIn(ExperimentalUnsignedTypes::class)
 open class SHA1: HashInterface {
@@ -157,13 +152,11 @@ open class SHA1: HashInterface {
             uByteArrays.forEachIndexed { index, uBytes ->
                 uintArray[index] = uBytes.toUByteArray().toUInt()
             }
-            val uintArrayList = uintArray.toMutableList()
-            // Populating the array to hold 80 element
+
+            // Populating the array with the remaining elements
             for (i in 16..79) {
-                uintArrayList[i] =
-                    (uintArrayList[i - 3] xor uintArrayList[i - 8] xor uintArrayList[i - 14] xor uintArrayList[i - 16]).rotateLeft(
-                        1
-                    )
+                uintArray[i] = (uintArray[i - 3] xor uintArray[i - 8] xor uintArray[i - 14] xor uintArray[i - 16])
+                        .rotateLeft(1)
             }
             var a = h0
             var b = h1
@@ -174,7 +167,7 @@ open class SHA1: HashInterface {
             for (i in 0..79) {
                 val f: UInt = f(b, c, d, i)
                 val k: UInt = k(i)
-                val temp = a.rotateLeft(5) + f + e + k + uintArrayList[i]
+                val temp = a.rotateLeft(5) + f + e + k + uintArray[i]
                 e = d
                 d = c
                 c = b.rotateLeft(30)

@@ -9,8 +9,6 @@ import krypto.utils.xor
  * The HMAC is MAC algorithm, which used a key and a hash function to generate the MAC of a given msg.
  * The detailed description of the algorithm can be found here: https://en.wikipedia.org/wiki/HMAC
  *
- * @property key The key to used during the MAC generation
- * @property digest The hash function to be used during the MAC generation
  */
 @OptIn(ExperimentalUnsignedTypes::class)
 class HMAC<T: HashInterface>(private val key: UByteArray, private val digest: T): MACInterface {
