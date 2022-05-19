@@ -13,7 +13,7 @@ On the other hand, some of the implementations use new features in the language 
 
 ## The structure of the project
 
-The source files live under the `src` folder. You can find a `main` and a `test` folder there. The former contains the implementations structured in a packages, while the latter holds the tests for these implementations. In the `utils` package you can find the extensions function which make the classes more readable.
+The source files live under the `src` folder. You can find a `main` and a `test` folder there. The former contains the implementations structured in a packages, while the latter holds the tests for these implementations. In the `utils` package you can find the extension functions which make the classes more readable.
 
 ## Documentation
 
