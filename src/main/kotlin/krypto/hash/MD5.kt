@@ -96,7 +96,7 @@ class MD5: SHA1() {
      * @param i The current iteration number in the main loop
      * @return The value for this iteration
      */
-    fun g(i: Int): Int {
+    internal fun g(i: Int): Int {
         return when(i) {
             in 0..15 -> i
             in 16..31 -> ((5 * i) + 1) % 16

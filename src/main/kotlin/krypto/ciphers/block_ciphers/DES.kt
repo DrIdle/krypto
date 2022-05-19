@@ -230,7 +230,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * @param i The amount of rotating steps
      * @return The rotated number as a string of 1-s and 0-s
      */
-    fun rotateLeftWithGiven(s: String, i: Int): String {
+    internal fun rotateLeftWithGiven(s: String, i: Int): String {
         var sInt = s.toUInt(2)
         sInt = sInt.rotateLeft(i)
         val sIntLast28 = sInt and 0xFFFFFFFu
@@ -310,7 +310,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * @param i The index of the current round
      * @return The output of the F function
      */
-    fun feistelFunction(right: String, i: Int): String {
+    internal fun feistelFunction(right: String, i: Int): String {
         val extendedRight = extended(right)
         val subKey = subKeys[i]
         val substitutionInput = (extendedRight.toULong(2) xor subKey.toULong(2))
@@ -361,7 +361,7 @@ class DES(private val key: UByteArray, private val mode: String): BlockCipherInt
      * @param p The array holding the order of the index in the permutation
      * @return The string created by the permutation given by [p]
      */
-    fun permutation(msgString: String, p: IntArray): String {
+    internal fun permutation(msgString: String, p: IntArray): String {
         val charSeq = CharArray(p.size) { index ->
             msgString[p[index]-1]
         }

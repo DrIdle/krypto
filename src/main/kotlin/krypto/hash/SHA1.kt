@@ -28,7 +28,7 @@ open class SHA1: HashInterface {
      * @param t The current iteration number in the main loop
      * @return The value for this iteration
      */
-    open fun k(t: Int): UInt {
+    internal open fun k(t: Int): UInt {
         return when(t) {
             in 0..19 -> 0x5A827999u
             in 20..39 -> 0x6ED9EBA1u
@@ -66,7 +66,7 @@ open class SHA1: HashInterface {
      * @param d The value of d
      * @param i The iteration number in the main loop
      */
-    open fun f(b: UInt, c: UInt, d: UInt, i: Int): UInt {
+    internal open fun f(b: UInt, c: UInt, d: UInt, i: Int): UInt {
         return when(i) {
             in 0..19 -> (b and c) or (b.inv() and d)
             in 20..39 -> b xor c xor d
@@ -126,7 +126,7 @@ open class SHA1: HashInterface {
      * @param originalLength The length of original message in bytes
      * @param msgCopy The copy of the msg as a [MutableList]
      */
-    open fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
+    internal open fun concatOriginalLength(originalLength: ULong, msgCopy: MutableList<UByte>) {
         msgCopy.addAll((originalLength * 8u).toUByteArray())
     }
 
@@ -144,7 +144,7 @@ open class SHA1: HashInterface {
      * @param msgCopy The message whose digest is calculated
      * @return The digest as a [UIntArray]
      */
-    open fun digestGeneration(msgCopy: MutableList<UByte>): UIntArray {
+    internal open fun digestGeneration(msgCopy: MutableList<UByte>): UIntArray {
         val chunks = msgCopy.chunked(64)
         chunks.forEach { uByteList ->
             val uByteArrays = uByteList.chunked(4)

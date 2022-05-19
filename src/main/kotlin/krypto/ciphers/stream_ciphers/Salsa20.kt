@@ -53,7 +53,7 @@ class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
      * @param y The array containing values from the internal state
      * @return The new values
      */
-    fun quarterRound(y: UIntArray): UIntArray {
+    internal fun quarterRound(y: UIntArray): UIntArray {
         val z = UIntArray(4)
         z[1] = y[1] xor (y[0] + y[3]).rotateLeft(7)
         z[2] = y[2] xor (z[1] + y[0]).rotateLeft(9)
@@ -69,7 +69,7 @@ class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
      * @param y The internal state
      * @return The new internal state after the row round
      */
-    fun rowRound(y: UIntArray): UIntArray {
+    internal fun rowRound(y: UIntArray): UIntArray {
         val z = UIntArray(16)
 
         val qrResult1 = quarterRound(uintArrayOf(y[0], y[1], y[2], y[3]))
@@ -106,7 +106,7 @@ class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
      * @param x The internal state
      * @return The new internal state
      */
-    fun columnRound(x: UIntArray): UIntArray {
+    internal fun columnRound(x: UIntArray): UIntArray {
         val y = UIntArray(16)
 
         val qrResult1 = quarterRound(uintArrayOf(x[0], x[4], x[8], x[12]))
@@ -143,7 +143,7 @@ class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
      * @param x The internal state
      * @return The new internal state
      */
-    fun doubleRound(x: UIntArray): UIntArray {
+    internal fun doubleRound(x: UIntArray): UIntArray {
         return rowRound(columnRound(x))
     }
 
@@ -157,7 +157,7 @@ class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
      * @param x The initial state
      * @return A 64-byte long block of the keystream.
      */
-    fun salsa20Hash(x: UByteArray): UByteArray {
+    internal fun salsa20Hash(x: UByteArray): UByteArray {
         var xAsWords = UIntArray(16) { index ->
             x.copyOfRange(index*4, (index*4)+4).littleEndian()
         }
@@ -195,7 +195,7 @@ class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
      * @param n The nonce
      * @return The keystream block
      */
-    fun salsa20Expansion(k: UByteArray, n: UByteArray): UByteArray {
+    internal fun salsa20Expansion(k: UByteArray, n: UByteArray): UByteArray {
         if (k.size == 32) {
             return salsa20Hash(sigma[0] + k.copyOfRange(0,16) + sigma[1] + n + sigma[2] + k.copyOfRange(16,32)+ sigma[3])
         }
@@ -222,7 +222,9 @@ class Salsa20 (private var key: UByteArray, var nonce: ULong?) {
      */
     fun encodeDecode(m: UByteArray, counter: ULong = 0u): UByteArray {
         nonce = nonce ?: 0u
+        // Which 64 byte long keystream block belongs to this byte position
         val blockNumber = counter / 64u
+        // What is the position if this byte in the 64 byte long block
         val byteOffset = (counter % 64u).toInt() // Can only be between 0 and 64
         var runningCounter = blockNumber
 
