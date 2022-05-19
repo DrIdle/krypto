@@ -3,7 +3,13 @@ Krypto: Cryto library for Kotlin
 
 This project holds implementation of various cryptographic primitives written purely in Kotlin.
 
-**NOTE** that these implementatios should not be used in a real environment. I only created them so I can better understand how they work and of course to practice some Kotlin.
+## Disclaimer
+
+These implementations should not be used in a real environment. I only created them so I can better understand how they work and of course to practice some Kotlin.
+
+The classes in this project utilize arrays of unsinged types (such as `UByteArray` or `UIntArray`), which at the time of writing are only at experimental level in Kotlin. To make this fact more prominent, the affected classes have the appropriate annotation.
+
+On the other hand, some of the implementations use new features in the language (for example `rotateLeft`), which can only be found in Kotlin version 1.6 or higher. Therefore, you have to have a version which supports these methods to use these implementations.
 
 ## The structure of the project
 
