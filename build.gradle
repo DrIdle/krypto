@@ -1,5 +1,4 @@
 plugins {
-    //id 'org.jetbrains.kotlin.jvm' version '1.5.10'
     id 'org.jetbrains.kotlin.jvm' version '1.6.10'
     id 'application'
     id("org.jetbrains.dokka") version "1.6.21"
@@ -12,9 +11,6 @@ repositories {
     mavenCentral()
 }
 
-//dependencies {
-//    testImplementation "junit:junit:4.13.2"
-//}
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
